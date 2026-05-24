@@ -54,8 +54,6 @@ validate_port "NETBIRD_STUN_PORT" "$NETBIRD_STUN_PORT"
 log "Cleaning up containers from any previous failed install ..."
 netbird_cleanup_stale_containers
 netbird_assert_ports_free
-netbird_ensure_image_tags_in_env "${BASE_DIR}"
-netbird_load_env "${BASE_DIR}" || true
 
 [[ -n "$DATASTORE_ENCRYPTION_KEY" ]] || DATASTORE_ENCRYPTION_KEY="$(rand_b64)"
 [[ -n "$NETBIRD_RELAY_AUTH_SECRET" ]] || NETBIRD_RELAY_AUTH_SECRET="$(rand_b64_nopad)"

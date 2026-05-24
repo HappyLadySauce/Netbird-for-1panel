@@ -60,8 +60,8 @@ netbird_udp_port_taken() {
 }
 
 netbird_assert_ports_free() {
-    local http_port="${PANEL_APP_PORT_HTTP:-8080}"
-    local mgmt_port="${NETBIRD_MGMT_PORT:-8081}"
+    local http_port="${PANEL_APP_PORT_HTTP:-9080}"
+    local mgmt_port="${NETBIRD_MGMT_PORT:-9081}"
     local stun_port="${NETBIRD_STUN_PORT:-3478}"
     local busy=""
 
@@ -72,34 +72,6 @@ netbird_assert_ports_free() {
     if [[ -n "${busy}" ]]; then
         netbird_fail "Port(s) already in use:${busy}. Stop the other service, change ports on the install form, or remove leftover containers: docker rm -f \"\${CONTAINER_NAME}\" \"\${CONTAINER_NAME}-server\""
     fi
-}
-
-# If pinned tag is missing locally (registry timeout), fall back to latest in .env.
-# 镜像 tag 拉取失败时，若本地仅有 latest，则写入 .env 供 compose 使用。
-netbird_ensure_image_tags_in_env() {
-    local base_dir="$1"
-    local env_file="${base_dir}/.env"
-    local dash_tag="${NETBIRD_DASHBOARD_TAG:-v0.71.4}"
-    local srv_tag="${NETBIRD_SERVER_TAG:-v0.71.4}"
-    local dash_image="netbirdio/dashboard:${dash_tag}"
-    local srv_image="netbirdio/netbird-server:${srv_tag}"
-
-    command -v docker >/dev/null 2>&1 || return 0
-    [[ -f "${env_file}" ]] || return 0
-
-    if ! docker image inspect "${dash_image}" >/dev/null 2>&1 && docker image inspect "netbirdio/dashboard:latest" >/dev/null 2>&1; then
-        dash_image="netbirdio/dashboard:latest"
-        netbird_log "Using local dashboard:latest (tag ${dash_tag} not present)"
-    fi
-    if ! docker image inspect "${srv_image}" >/dev/null 2>&1 && docker image inspect "netbirdio/netbird-server:latest" >/dev/null 2>&1; then
-        srv_image="netbirdio/netbird-server:latest"
-        netbird_log "Using local netbird-server:latest (tag ${srv_tag} not present)"
-    fi
-
-    local tmp="${env_file}.netbird.tmp"
-    grep -vE '^(NETBIRD_DASHBOARD_IMAGE|NETBIRD_SERVER_IMAGE)=' "${env_file}" 2>/dev/null > "${tmp}" || : > "${tmp}"
-    printf 'NETBIRD_DASHBOARD_IMAGE=%s\nNETBIRD_SERVER_IMAGE=%s\n' "${dash_image}" "${srv_image}" >> "${tmp}"
-    mv "${tmp}" "${env_file}"
 }
 
 netbird_compose_down() {

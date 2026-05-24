@@ -1,6 +1,6 @@
 services:
   dashboard:
-    image: ${NETBIRD_DASHBOARD_IMAGE:-netbirdio/dashboard:v0.71.4}
+    image: docker.io/netbirdio/dashboard:v0.71.4
     container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     networks:
@@ -18,7 +18,7 @@ services:
         max-file: "2"
 
   netbird-server:
-    image: ${NETBIRD_SERVER_IMAGE:-netbirdio/netbird-server:v0.71.4}
+    image: docker.io/netbirdio/netbird-server:v0.71.4
     container_name: ${CONTAINER_NAME}-server
     restart: unless-stopped
     networks:
