@@ -36,21 +36,24 @@
 | STUN UDP 端口 | 默认 `3478` |
 | 加密密钥 | 可留空，由 `init.sh` 自动生成 |
 
-### 3. 配置 1Panel 网站（OpenResty）
+### 3. 配置 1Panel 网站（OpenResty）— 必须手动改文件
 
-1. **网站** → 创建站点 → 主域名填写安装时的 `NETBIRD_DOMAIN`
-2. 申请 **HTTPS** 证书（Let's Encrypt）
-3. 打开站点 **配置** → **自定义** / **OpenResty 配置**，追加反代规则
+> **警告**：不能只在 1Panel 面板里配置「网站 → 反向代理 → 127.0.0.1:8080」。面板 **无法配置 gRPC**，客户端将无法连接。
 
-安装完成后，应用数据目录会生成：
+请按仓库文档操作（推荐直接覆盖代理文件）：
 
-```text
-<应用安装路径>/data/openresty-snippet.conf
+1. **网站** → 创建站点 → 主域名 = 安装时的 `NETBIRD_DOMAIN`，并申请 **HTTPS**
+2. 将仓库 **[docs/proxy/](../docs/proxy/)** 复制到 1Panel 站点目录（**覆盖** `root.conf`，**新建** `netbird-server.conf`）：
+
+```bash
+DOMAIN="<你的域名>"
+cp -f docs/proxy/netbird-server.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
+cp -f docs/proxy/root.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
 ```
 
-将其中 `location` 块粘贴到站点的 `server { ... }` 内（与 1Panel 自动生成的 SSL 块并存）。
+3. 按 **[docs/1panel-openresty.md](../docs/1panel-openresty.md)** 补充 `conf.d` 超时、执行 `openresty -t` 与验证
 
-**要点**：必须包含 **gRPC** 路径（`/management.ManagementService/`、`/signalexchange.SignalExchange/`），否则客户端无法注册。
+安装后 `data/openresty-snippet.conf` 仅供参考；**以 `docs/proxy/` 为准**。
 
 ### 4. 初始化管理员
 
@@ -104,6 +107,8 @@ dashboard 容器              netbird-server 容器
 
 ## 参考
 
+- **[1Panel OpenResty 配置（必读）](../docs/1panel-openresty.md)**
+- **[docs/proxy/ 可覆盖的代理文件](../docs/proxy/README.md)**
 - [NetBird 文档](https://docs.netbird.io/selfhosted/selfhosted-quickstart)
 - [1Panel 自助创建应用](https://bbs.fit2cloud.com/t/topic/7409)
 - 金样配置：`reference/golden/`（由官方 `getting-started.sh` 生成）

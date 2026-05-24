@@ -5,13 +5,16 @@
 ## 目录结构
 
 ```text
-netbird/                 # 复制到 /opt/1panel/resource/apps/local/netbird
-reference/golden/        # 官方脚本生成的参考配置
+netbird/                      # 复制到 /opt/1panel/resource/apps/local/netbird
+docs/
+  1panel-openresty.md         # OpenResty 必用手动配置说明（必读）
+  proxy/                      # 可直接覆盖到 1Panel 站点的代理文件
+reference/golden/             # 官方脚本生成的参考配置
 ```
 
 ## 快速开始
 
-### 一键安装到 1Panel 本地应用目录
+### 1. 安装应用
 
 在服务器上执行（需已安装 1Panel，默认路径 `/opt/1panel`）：
 
@@ -19,20 +22,31 @@ reference/golden/        # 官方脚本生成的参考配置
 curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/main/install.sh | sh
 ```
 
-也可在 **计划任务** 中新建 Shell 脚本任务，将上述命令或仓库中的 `install.sh` 内容粘贴执行（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
+也可在 **计划任务** 中新建 Shell 脚本任务执行上述命令（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
 
-自定义 1Panel 目录：
+然后在 **应用商店 → 更新应用列表** 中安装 NetBird，并按 [netbird/README.md](netbird/README.md) 填写安装表单。
+
+### 2. 配置 OpenResty（必做，不能只在面板里点反代）
+
+**不能** 仅在 1Panel 网站面板中添加「反向代理到 8080」。必须将 [docs/proxy/](docs/proxy/) 中的文件复制到站点目录：
 
 ```bash
-export ONEPANEL_ROOT=/your/1panel/path
-sh install.sh
+DOMAIN="netbird.example.com"
+cp -f docs/proxy/netbird-server.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
+cp -f docs/proxy/root.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
 ```
 
-### 手动安装
+完整步骤、验证命令与 `conf.d` 超时配置见：**[docs/1panel-openresty.md](docs/1panel-openresty.md)**。
+
+### 3. 初始化
+
+浏览器访问 `https://<你的域名>/setup` 创建管理员。
+
+## 手动安装应用包
 
 1. 将 `netbird/` 复制到 1Panel `resource/apps/local/`
 2. 应用商店 → 更新应用列表 → 安装 NetBird
-3. 按 [netbird/README.md](netbird/README.md) 配置 OpenResty 与 `/setup`
+3. 按 [docs/1panel-openresty.md](docs/1panel-openresty.md) 配置反向代理
 
 ## 许可证
 
