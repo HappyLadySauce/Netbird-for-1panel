@@ -1,0 +1,50 @@
+additionalProperties:
+    formFields:
+        - default: ""
+          edit: true
+          envKey: NETBIRD_DOMAIN
+          labelEn: Public domain (e.g. netbird.example.com)
+          labelZh: 公网域名（如 netbird.example.com）
+          required: true
+          rule: paramCommon
+          type: text
+        - default: 8080
+          edit: true
+          envKey: PANEL_APP_PORT_HTTP
+          labelEn: Dashboard local port (127.0.0.1, for OpenResty)
+          labelZh: Dashboard 本机端口（127.0.0.1，供 OpenResty 反代）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 8081
+          edit: true
+          envKey: NETBIRD_MGMT_PORT
+          labelEn: Management/API local port (127.0.0.1)
+          labelZh: 管理/API 本机端口（127.0.0.1）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 3478
+          edit: true
+          envKey: NETBIRD_STUN_PORT
+          labelEn: STUN UDP port (host)
+          labelZh: STUN UDP 端口（宿主机）
+          required: true
+          rule: paramPort
+          type: number
+        - default: ""
+          edit: true
+          envKey: DATASTORE_ENCRYPTION_KEY
+          labelEn: Data store encryption key (base64, auto if empty)
+          labelZh: 数据存储加密密钥（base64，留空自动生成）
+          required: false
+          rule: paramComplexity
+          type: password
+        - default: ""
+          edit: true
+          envKey: NETBIRD_RELAY_AUTH_SECRET
+          labelEn: Relay auth secret (auto if empty)
+          labelZh: Relay 认证密钥（留空自动生成）
+          required: false
+          rule: paramComplexity
+          type: password

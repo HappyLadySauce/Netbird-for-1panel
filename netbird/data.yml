@@ -1,0 +1,14 @@
+additionalProperties:
+    key: netbird
+    name: NetBird
+    tags:
+        - Tool
+        - Local
+    shortDescZh: 基于 WireGuard 的零信任组网控制面（自建）
+    shortDescEn: Self-hosted NetBird control plane (WireGuard mesh VPN)
+    type: tool
+    crossVersionUpdate: true
+    limit: 0
+    website: https://netbird.io/
+    github: https://github.com/netbirdio/netbird
+    document: https://docs.netbird.io/selfhosted/selfhosted-quickstart

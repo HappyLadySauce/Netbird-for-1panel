@@ -1,0 +1,43 @@
+services:
+  dashboard:
+    image: netbirdio/dashboard:v0.71.4
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    networks:
+      - 1panel-network
+    ports:
+      - "127.0.0.1:${PANEL_APP_PORT_HTTP}:80"
+    env_file:
+      - ./data/dashboard.env
+    labels:
+      createdBy: "Apps"
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+  netbird-server:
+    image: netbirdio/netbird-server:v0.71.4
+    container_name: ${CONTAINER_NAME}-server
+    restart: unless-stopped
+    networks:
+      - 1panel-network
+    ports:
+      - "127.0.0.1:${NETBIRD_MGMT_PORT}:80"
+      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
+    volumes:
+      - ./data/netbird:/var/lib/netbird
+      - ./data/config.yaml:/etc/netbird/config.yaml:ro
+    command: ["--config", "/etc/netbird/config.yaml"]
+    labels:
+      createdBy: "Apps"
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "2"
+
+networks:
+  1panel-network:
+    external: true
