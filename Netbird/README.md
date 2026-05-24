@@ -18,10 +18,10 @@
 
 ### 1. 放入本地应用目录
 
-将整个 `netbird` 文件夹复制到 1Panel 本地应用路径（默认）：
+将整个 `Netbird` 文件夹复制到 1Panel 本地应用路径（默认）：
 
 ```text
-/opt/1panel/resource/apps/local/netbird
+/opt/1panel/resource/apps/local/Netbird
 ```
 
 在 **应用商店 → 更新应用列表** 后安装 **NetBird latest**。

@@ -1,5 +1,5 @@
 additionalProperties:
-    key: netbird
+    key: Netbird
     name: NetBird
     tags:
         - Tool

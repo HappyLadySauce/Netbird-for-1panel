@@ -12,7 +12,8 @@ set -e
 
 REPO_URL="${NETBIRD_1PANEL_REPO:-https://github.com/HappyLadySauce/Netbird-for-1panel.git}"
 BRANCH="${NETBIRD_1PANEL_BRANCH:-main}"
-APP_KEY="netbird"
+APP_KEY="Netbird"
+LEGACY_APP_KEY="netbird"
 CLONE_DIR="${NETBIRD_1PANEL_CACHE:-/tmp/Netbird-for-1panel}"
 
 # Set by resolve_source_dir; do not capture via $(...) — git/log stdout would corrupt the path.
@@ -89,17 +90,20 @@ resolve_source_dir() {
 # Remove stale catalog under resource/apps/local before fresh sync.
 # 安装前先删除本地应用目录中的 netbird 残留，避免旧文件与 rsync 混杂。
 cleanup_local_app_catalog() {
-    target_dir="$1"
+    local_apps_dir="$1"
+    target_dir="$2"
 
     if [ "${NETBIRD_INSTALL_SKIP_CLEANUP:-0}" = "1" ]; then
         log "Skip cleanup (NETBIRD_INSTALL_SKIP_CLEANUP=1): ${target_dir}"
         return 0
     fi
 
-    if [ -e "${target_dir}" ]; then
-        log "Removing stale local app files: ${target_dir}"
-        rm -rf "${target_dir}"
-    fi
+    for stale in "${local_apps_dir}/${LEGACY_APP_KEY}" "${target_dir}"; do
+        if [ -e "${stale}" ]; then
+            log "Removing stale local app files: ${stale}"
+            rm -rf "${stale}"
+        fi
+    done
 }
 
 install_from_dir() {
@@ -109,7 +113,7 @@ install_from_dir() {
     [ -n "${src_dir}" ] || die "Source directory is empty"
     [ -d "${src_dir}/${APP_KEY}" ] || die "App folder not found: ${src_dir}/${APP_KEY}"
 
-    cleanup_local_app_catalog "${target_dir}"
+    cleanup_local_app_catalog "$(dirname "${target_dir}")" "${target_dir}"
 
     mkdir -p "${target_dir}"
     if command -v rsync >/dev/null 2>&1; then

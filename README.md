@@ -5,7 +5,7 @@
 ## 目录结构
 
 ```text
-netbird/                      # 复制到 /opt/1panel/resource/apps/local/netbird
+Netbird/                      # 复制到 /opt/1panel/resource/apps/local/Netbird
 docs/
   1panel-openresty.md         # OpenResty 必用手动配置说明（必读）
   proxy/                      # 可直接覆盖到 1Panel 站点的代理文件
@@ -24,9 +24,9 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 
 也可在 **计划任务** 中新建 Shell 脚本任务执行上述命令（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
 
-`install.sh` 会**先删除** `/opt/1panel/resource/apps/local/netbird` 再写入新文件，避免旧版本残留。若需保留该目录可设：`NETBIRD_INSTALL_SKIP_CLEANUP=1`。
+`install.sh` 会**先删除** `/opt/1panel/resource/apps/local/Netbird`（及旧目录 `netbird`）再写入新文件。若需保留可设：`NETBIRD_INSTALL_SKIP_CLEANUP=1`。
 
-然后在 **应用商店 → 更新应用列表** 中安装 NetBird，并按 [netbird/README.md](netbird/README.md) 填写安装表单。
+然后在 **应用商店 → 更新应用列表** 中安装 NetBird，并按 [Netbird/README.md](Netbird/README.md) 填写安装表单。
 
 ### 2. 配置 OpenResty（必做，不能只在面板里点反代）
 
@@ -48,7 +48,7 @@ cp -f docs/proxy/root.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
 
 ## 手动安装应用包
 
-1. 将 `netbird/` 复制到 1Panel `resource/apps/local/`
+1. 将 `Netbird/` 复制到 1Panel `resource/apps/local/`
 2. 应用商店 → 更新应用列表 → 安装 NetBird
 3. 按 [docs/1panel-openresty.md](docs/1panel-openresty.md) 配置反向代理
 

@@ -143,5 +143,5 @@ curl -sk -o /dev/null -w '%{http_code}\n' "https://<你的域名>/api/instance"
 
 ## 相关文档
 
-- 应用安装：[../netbird/README.md](../netbird/README.md)
+- 应用安装：[../Netbird/README.md](../Netbird/README.md)
 - 代理文件目录：[proxy/README.md](proxy/README.md)
