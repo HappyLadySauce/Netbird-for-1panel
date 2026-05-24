@@ -3,8 +3,8 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_DOMAIN
-          labelEn: Public domain (e.g. netbird.example.com)
-          labelZh: 公网域名（如 netbird.example.com）
+          labelEn: Public domain (e.g. netbird.example.com, no https://)
+          labelZh: 公网域名（如 netbird.example.com，不要带 https://）
           required: true
           rule: paramCommon
           type: text

@@ -11,6 +11,23 @@ DATA_DIR="${BASE_DIR}/data"
 log() { echo "[netbird-init] $*"; }
 fail() { log "ERROR: $*"; exit 1; }
 
+# 1Panel writes form values to .env in the app install directory before init runs.
+# 1Panel 在安装前将表单变量写入应用目录下的 .env，init 必须先加载。
+load_panel_env() {
+    local f
+    for f in "${BASE_DIR}/.env" "./.env" "${SCRIPT_DIR}/.env"; do
+        if [[ -f "${f}" ]]; then
+            set -a
+            # shellcheck disable=SC1090
+            source "${f}"
+            set +a
+            log "Loaded env from ${f}"
+            return 0
+        fi
+    done
+    return 1
+}
+
 rand_b64() { openssl rand -base64 32; }
 rand_b64_nopad() { openssl rand -base64 32 | tr -d '='; }
 
@@ -29,12 +46,18 @@ validate_port() {
     (( val >= 1 && val <= 65535 )) || fail "${name} must be between 1 and 65535"
 }
 
+load_panel_env || true
+
 NETBIRD_DOMAIN="${NETBIRD_DOMAIN:-}"
 PANEL_APP_PORT_HTTP="${PANEL_APP_PORT_HTTP:-8080}"
 NETBIRD_MGMT_PORT="${NETBIRD_MGMT_PORT:-8081}"
 NETBIRD_STUN_PORT="${NETBIRD_STUN_PORT:-3478}"
 DATASTORE_ENCRYPTION_KEY="${DATASTORE_ENCRYPTION_KEY:-}"
 NETBIRD_RELAY_AUTH_SECRET="${NETBIRD_RELAY_AUTH_SECRET:-}"
+
+if [[ -z "${NETBIRD_DOMAIN}" ]]; then
+    fail "NETBIRD_DOMAIN is required. Fill in the domain on the install form (hostname only, e.g. netbird.example.com)."
+fi
 
 validate_domain "$NETBIRD_DOMAIN"
 validate_port "PANEL_APP_PORT_HTTP" "$PANEL_APP_PORT_HTTP"
