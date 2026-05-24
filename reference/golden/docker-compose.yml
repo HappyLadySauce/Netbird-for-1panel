@@ -1,7 +1,7 @@
 services:
   # UI dashboard
   dashboard:
-    image: netbirdio/dashboard:v0.71.4
+    image: netbirdio/dashboard:latest
     container_name: netbird-dashboard
     restart: unless-stopped
     networks: [netbird]
@@ -17,7 +17,7 @@ services:
 
   # Combined server (Management + Signal + Relay + STUN)
   netbird-server:
-    image: netbirdio/netbird-server:v0.71.4
+    image: netbirdio/netbird-server:latest
     container_name: netbird-server
     restart: unless-stopped
     networks: [netbird]

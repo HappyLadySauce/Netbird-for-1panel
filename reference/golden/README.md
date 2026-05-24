@@ -1,4 +1,4 @@
-# Golden reference (NetBird v0.71.4)
+# Golden reference (NetBird latest)
 
 Generated from official `getting-started.sh` with:
 
