@@ -2,6 +2,8 @@
 
 1Panel 本地应用包：一键部署 [NetBird](https://netbird.io/) 自建控制面（嵌入式 IdP + OpenResty 反代）。
 
+![NetBird](docs/images/NetBird.png)
+
 ## 目录结构
 
 ```text
@@ -25,6 +27,8 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 也可在 **计划任务** 中新建 Shell 脚本任务执行上述命令（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
 
 `install.sh` 会**先删除** `/opt/1panel/resource/apps/local/Netbird`（及旧目录 `netbird`）再写入新文件。若需保留可设：`NETBIRD_INSTALL_SKIP_CLEANUP=1`。
+
+![plans](docs/images/plans.png)
 
 然后在 **应用商店 → 更新应用列表** 中安装 NetBird，并按 [Netbird/README.md](Netbird/README.md) 填写安装表单。
 
