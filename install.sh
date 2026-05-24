@@ -86,12 +86,30 @@ resolve_source_dir() {
     sync_git_repo
 }
 
+# Remove stale catalog under resource/apps/local before fresh sync.
+# 安装前先删除本地应用目录中的 netbird 残留，避免旧文件与 rsync 混杂。
+cleanup_local_app_catalog() {
+    target_dir="$1"
+
+    if [ "${NETBIRD_INSTALL_SKIP_CLEANUP:-0}" = "1" ]; then
+        log "Skip cleanup (NETBIRD_INSTALL_SKIP_CLEANUP=1): ${target_dir}"
+        return 0
+    fi
+
+    if [ -e "${target_dir}" ]; then
+        log "Removing stale local app files: ${target_dir}"
+        rm -rf "${target_dir}"
+    fi
+}
+
 install_from_dir() {
     src_dir="$1"
     target_dir="$2"
 
     [ -n "${src_dir}" ] || die "Source directory is empty"
     [ -d "${src_dir}/${APP_KEY}" ] || die "App folder not found: ${src_dir}/${APP_KEY}"
+
+    cleanup_local_app_catalog "${target_dir}"
 
     mkdir -p "${target_dir}"
     if command -v rsync >/dev/null 2>&1; then
@@ -102,9 +120,11 @@ install_from_dir() {
         cp -a "${src_dir}/${APP_KEY}/." "${target_dir}/"
     fi
 
-    if [ -d "${target_dir}/latest/scripts" ]; then
-        chmod +x "${target_dir}"/latest/scripts/*.sh 2>/dev/null || true
-    fi
+    for scripts_dir in "${target_dir}"/*/scripts; do
+        if [ -d "${scripts_dir}" ]; then
+            chmod +x "${scripts_dir}"/*.sh 2>/dev/null || true
+        fi
+    done
 }
 
 main() {

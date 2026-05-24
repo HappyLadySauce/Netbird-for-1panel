@@ -24,6 +24,8 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 
 也可在 **计划任务** 中新建 Shell 脚本任务执行上述命令（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
 
+`install.sh` 会**先删除** `/opt/1panel/resource/apps/local/netbird` 再写入新文件，避免旧版本残留。若需保留该目录可设：`NETBIRD_INSTALL_SKIP_CLEANUP=1`。
+
 然后在 **应用商店 → 更新应用列表** 中安装 NetBird，并按 [netbird/README.md](netbird/README.md) 填写安装表单。
 
 ### 2. 配置 OpenResty（必做，不能只在面板里点反代）
