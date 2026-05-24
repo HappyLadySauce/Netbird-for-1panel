@@ -15,7 +15,7 @@ BRANCH="${NETBIRD_1PANEL_BRANCH:-main}"
 APP_KEY="netbird"
 CLONE_DIR="${NETBIRD_1PANEL_CACHE:-/tmp/Netbird-for-1panel}"
 
-log() { printf '[netbird-1panel-install] %s\n' "$*"; }
+log() { printf '[netbird-1panel-install] %s\n' "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 
 detect_1panel_root() {
@@ -51,21 +51,23 @@ install_from_dir() {
         cp -a "${src_dir}/${APP_KEY}/." "${target_dir}/"
     fi
 
-  if [ -d "${target_dir}/0.71.4/scripts" ]; then
+    if [ -d "${target_dir}/0.71.4/scripts" ]; then
         chmod +x "${target_dir}"/0.71.4/scripts/*.sh 2>/dev/null || true
     fi
 }
 
 resolve_source_dir() {
     script_path="$1"
-    case "${script_path}" in
-        /*) script_dir=$(dirname "${script_path}") ;;
-        *) script_dir=$(cd "$(dirname "${script_path}")" && pwd) ;;
-    esac
 
-    if [ -d "${script_dir}/${APP_KEY}" ]; then
-        printf '%s' "${script_dir}"
-        return 0
+    if [ -n "${script_path}" ]; then
+        case "${script_path}" in
+            /*) script_dir=$(dirname "${script_path}") ;;
+            *) script_dir=$(cd "$(dirname "${script_path}")" && pwd) ;;
+        esac
+        if [ -d "${script_dir}/${APP_KEY}" ]; then
+            printf '%s' "${script_dir}"
+            return 0
+        fi
     fi
 
     need_cmd git
@@ -97,10 +99,14 @@ main() {
     local_apps="${panel_root}/resource/apps/local"
     target="${local_apps}/${APP_KEY}"
 
-    script_path="$0"
     if [ -n "${NETBIRD_1PANEL_SOURCE:-}" ] && [ -d "${NETBIRD_1PANEL_SOURCE}/${APP_KEY}" ]; then
         source_dir="${NETBIRD_1PANEL_SOURCE}"
     else
+        # curl | sh 时 $0 为 sh，无法定位仓库目录，走 git clone
+        script_path="$0"
+        case "${script_path}" in
+            sh|dash|bash|ksh|zsh) script_path="" ;;
+        esac
         source_dir=$(resolve_source_dir "${script_path}")
     fi
 
