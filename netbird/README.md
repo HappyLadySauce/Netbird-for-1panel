@@ -90,6 +90,18 @@ dashboard 容器              netbird-server 容器
 
 卸载应用后，`data/` 目录可能仍保留 SQLite 与密钥；需彻底删除请手动清理应用数据目录。
 
+在应用设置中卸载时会执行 `uninstall.sh`，停止容器并释放端口。若需连数据一起删除，可在宿主机应用目录执行：`REMOVE_DATA=1 bash scripts/uninstall.sh`。
+
+## 安装失败排查
+
+| 现象 | 处理 |
+|------|------|
+| `port is already allocated` | 在 1Panel 中**删除失败的 netbird 应用实例**（会触发卸载脚本），或执行 `docker rm -f <容器名> <容器名>-server`；安装表单改用未占用端口（默认已改为 **9080 / 9081**） |
+| 拉取 `v0.71.4` 超时 | 配置 Docker **镜像加速**；`init.sh` 会在本地仅有 `latest` 时自动写入 `.env` 使用存量镜像 |
+| init 成功但启动失败 | 勿重复点安装；先删除失败实例，更新本地应用包后重试 |
+
+**说明**：1Panel 在「启动失败」时不会自动回滚，需手动删除失败的应用条目。新版 `init.sh` 会在安装前**清理同名残留容器**并**检测端口占用**，冲突时直接失败，避免拉取镜像后再报错。
+
 ## 参考
 
 - [NetBird 文档](https://docs.netbird.io/selfhosted/selfhosted-quickstart)

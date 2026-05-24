@@ -5,28 +5,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib.sh
+source "${SCRIPT_DIR}/lib.sh"
+
 BASE_DIR="$(dirname "${SCRIPT_DIR}")"
 DATA_DIR="${BASE_DIR}/data"
 
-log() { echo "[netbird-init] $*"; }
-fail() { log "ERROR: $*"; exit 1; }
-
-# 1Panel writes form values to .env in the app install directory before init runs.
-# 1Panel 在安装前将表单变量写入应用目录下的 .env，init 必须先加载。
-load_panel_env() {
-    local f
-    for f in "${BASE_DIR}/.env" "./.env" "${SCRIPT_DIR}/.env"; do
-        if [[ -f "${f}" ]]; then
-            set -a
-            # shellcheck disable=SC1090
-            source "${f}"
-            set +a
-            log "Loaded env from ${f}"
-            return 0
-        fi
-    done
-    return 1
-}
+log() { netbird_log "init: $*"; }
+fail() { netbird_fail "$*"; }
 
 rand_b64() { openssl rand -base64 32; }
 rand_b64_nopad() { openssl rand -base64 32 | tr -d '='; }
@@ -46,11 +32,12 @@ validate_port() {
     (( val >= 1 && val <= 65535 )) || fail "${name} must be between 1 and 65535"
 }
 
-load_panel_env || true
+# --- preflight: load env, cleanup failed install, check ports ---
+netbird_load_env "${BASE_DIR}" || true
 
 NETBIRD_DOMAIN="${NETBIRD_DOMAIN:-}"
-PANEL_APP_PORT_HTTP="${PANEL_APP_PORT_HTTP:-8080}"
-NETBIRD_MGMT_PORT="${NETBIRD_MGMT_PORT:-8081}"
+PANEL_APP_PORT_HTTP="${PANEL_APP_PORT_HTTP:-9080}"
+NETBIRD_MGMT_PORT="${NETBIRD_MGMT_PORT:-9081}"
 NETBIRD_STUN_PORT="${NETBIRD_STUN_PORT:-3478}"
 DATASTORE_ENCRYPTION_KEY="${DATASTORE_ENCRYPTION_KEY:-}"
 NETBIRD_RELAY_AUTH_SECRET="${NETBIRD_RELAY_AUTH_SECRET:-}"
@@ -63,6 +50,12 @@ validate_domain "$NETBIRD_DOMAIN"
 validate_port "PANEL_APP_PORT_HTTP" "$PANEL_APP_PORT_HTTP"
 validate_port "NETBIRD_MGMT_PORT" "$NETBIRD_MGMT_PORT"
 validate_port "NETBIRD_STUN_PORT" "$NETBIRD_STUN_PORT"
+
+log "Cleaning up containers from any previous failed install ..."
+netbird_cleanup_stale_containers
+netbird_assert_ports_free
+netbird_ensure_image_tags_in_env "${BASE_DIR}"
+netbird_load_env "${BASE_DIR}" || true
 
 [[ -n "$DATASTORE_ENCRYPTION_KEY" ]] || DATASTORE_ENCRYPTION_KEY="$(rand_b64)"
 [[ -n "$NETBIRD_RELAY_AUTH_SECRET" ]] || NETBIRD_RELAY_AUTH_SECRET="$(rand_b64_nopad)"
@@ -123,7 +116,6 @@ NGINX_SSL_PORT=443
 LETSENCRYPT_DOMAIN=none
 EOF
 
-# OpenResty snippet for operator (paths use install-time ports)
 cat > "${DATA_DIR}/openresty-snippet.conf" <<EOF
 # NetBird OpenResty snippet — paste into 1Panel site custom config for ${NETBIRD_DOMAIN}
 # Dashboard: 127.0.0.1:${PANEL_APP_PORT_HTTP}  |  Server: 127.0.0.1:${NETBIRD_MGMT_PORT}
@@ -178,13 +170,8 @@ EOF
 chmod 600 "${DATA_DIR}/config.yaml" "${DATA_DIR}/dashboard.env" 2>/dev/null || true
 
 log "Wrote ${DATA_DIR}/config.yaml and dashboard.env"
+log "Ports: dashboard 127.0.0.1:${PANEL_APP_PORT_HTTP}, api 127.0.0.1:${NETBIRD_MGMT_PORT}, stun udp ${NETBIRD_STUN_PORT}"
 log "OpenResty snippet: ${DATA_DIR}/openresty-snippet.conf"
-log "After install: configure 1Panel website HTTPS for ${NETBIRD_DOMAIN}, then visit https://${NETBIRD_DOMAIN}/setup"
-
-if command -v curl >/dev/null 2>&1; then
-    if curl -sf --max-time 3 "http://127.0.0.1:${NETBIRD_MGMT_PORT}/oauth2/.well-known/openid-configuration" >/dev/null 2>&1; then
-        log "Management OIDC endpoint is reachable on port ${NETBIRD_MGMT_PORT}"
-    fi
-fi
+log "After install: HTTPS site for ${NETBIRD_DOMAIN}, then https://${NETBIRD_DOMAIN}/setup"
 
 exit 0
