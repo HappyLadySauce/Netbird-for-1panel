@@ -99,6 +99,7 @@ dashboard 容器              netbird-server 容器
 
 | 现象 | 处理 |
 |------|------|
+| 代理未运行；NetBird 首次启动会拉 GeoLite2 并因此 **FATL 退出**。应用已默认 `NB_DISABLE_GEOLOCATION=true`（关闭地理位置 posture，不影响组网）。若需 GeoIP：关掉容器代理或手动放入 MMDB，见 [官方说明](https://docs.netbird.io/selfhosted/geo-support) |
 | `port is already allocated` | 在 1Panel 中**删除失败的 netbird 应用实例**（会触发卸载脚本），或执行 `docker rm -f <容器名> <容器名>-server`；安装表单改用未占用端口（默认 **8080 / 8081**） |
 | 拉取镜像超时 | 在 1Panel / Docker 中配置 **镜像加速**（默认从 `docker.io` 拉取 `netbirdio/*:latest`） |
 | init 成功但启动失败 | 勿重复点安装；先删除失败实例，更新本地应用包后重试 |

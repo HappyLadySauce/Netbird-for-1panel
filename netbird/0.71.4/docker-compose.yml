@@ -21,6 +21,10 @@ services:
     image: netbirdio/netbird-server:latest
     container_name: ${CONTAINER_NAME}-server
     restart: unless-stopped
+    environment:
+      # Skip GeoLite2 download (fails when Docker HTTP_PROXY points to dead local proxy).
+      # 跳过 GeoIP 库下载（1Panel/Docker 代理不可用时会导致启动 FATL）
+      - NB_DISABLE_GEOLOCATION=true
     networks:
       - 1panel-network
     ports:
