@@ -96,7 +96,7 @@ dashboard 容器              netbird-server 容器
 
 | 现象 | 处理 |
 |------|------|
-| `port is already allocated` | 在 1Panel 中**删除失败的 netbird 应用实例**（会触发卸载脚本），或执行 `docker rm -f <容器名> <容器名>-server`；安装表单改用未占用端口（默认已改为 **9080 / 9081**） |
+| `port is already allocated` | 在 1Panel 中**删除失败的 netbird 应用实例**（会触发卸载脚本），或执行 `docker rm -f <容器名> <容器名>-server`；安装表单改用未占用端口（默认 **8080 / 8081**） |
 | 拉取镜像超时 | 在 1Panel / Docker 中配置 **镜像加速**（默认从 `docker.io` 拉取 `netbirdio/*:v0.71.4`） |
 | init 成功但启动失败 | 勿重复点安装；先删除失败实例，更新本地应用包后重试 |
 

@@ -8,7 +8,7 @@ additionalProperties:
           required: true
           rule: paramCommon
           type: text
-        - default: 9080
+        - default: 8080
           edit: true
           envKey: PANEL_APP_PORT_HTTP
           labelEn: Dashboard local port (127.0.0.1, for OpenResty)
@@ -16,7 +16,7 @@ additionalProperties:
           required: true
           rule: paramPort
           type: number
-        - default: 9081
+        - default: 8081
           edit: true
           envKey: NETBIRD_MGMT_PORT
           labelEn: Management/API local port (127.0.0.1)

@@ -60,8 +60,8 @@ netbird_udp_port_taken() {
 }
 
 netbird_assert_ports_free() {
-    local http_port="${PANEL_APP_PORT_HTTP:-9080}"
-    local mgmt_port="${NETBIRD_MGMT_PORT:-9081}"
+    local http_port="${PANEL_APP_PORT_HTTP:-8080}"
+    local mgmt_port="${NETBIRD_MGMT_PORT:-8081}"
     local stun_port="${NETBIRD_STUN_PORT:-3478}"
     local busy=""
 
