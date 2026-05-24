@@ -24,7 +24,7 @@
 /opt/1panel/resource/apps/local/netbird
 ```
 
-在 **应用商店 → 更新应用列表** 后安装 **NetBird 0.71.4**。
+在 **应用商店 → 更新应用列表** 后安装 **NetBird latest**。
 
 ### 2. 填写安装表单
 

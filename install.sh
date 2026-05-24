@@ -102,8 +102,8 @@ install_from_dir() {
         cp -a "${src_dir}/${APP_KEY}/." "${target_dir}/"
     fi
 
-    if [ -d "${target_dir}/0.71.4/scripts" ]; then
-        chmod +x "${target_dir}"/0.71.4/scripts/*.sh 2>/dev/null || true
+    if [ -d "${target_dir}/latest/scripts" ]; then
+        chmod +x "${target_dir}"/latest/scripts/*.sh 2>/dev/null || true
     fi
 }
 
