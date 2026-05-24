@@ -28,10 +28,12 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 
 ### 2. 配置 OpenResty（必做，不能只在面板里点反代）
 
+![openresty](docs/images/openresty.png)
+
 **不能** 仅在 1Panel 网站面板中添加「反向代理到 8080」。必须将 [docs/proxy/](docs/proxy/) 中的文件复制到站点目录：
 
 ```bash
-DOMAIN="netbird.example.com"
+DOMAIN="www.example.com"
 cp -f docs/proxy/netbird-server.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
 cp -f docs/proxy/root.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
 ```
