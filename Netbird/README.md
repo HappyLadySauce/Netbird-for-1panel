@@ -43,17 +43,18 @@
 请按仓库文档操作（推荐直接覆盖代理文件）：
 
 1. **网站** → 创建站点 → 主域名 = 安装时的 `NETBIRD_DOMAIN`，并申请 **HTTPS**
-2. 将仓库 **[docs/proxy/](../docs/proxy/)** 复制到 1Panel 站点目录（**覆盖** `root.conf`，**新建** `netbird-server.conf`）：
+2. 将仓库 **[docs/openresty/proxy/](../docs/openresty/proxy/)** 复制到 1Panel 站点目录（**覆盖** `root.conf`，**新建** `netbird-server.conf`）：
 
 ```bash
 DOMAIN="<你的域名>"
-cp -f docs/proxy/netbird-server.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
-cp -f docs/proxy/root.conf /opt/1panel/www/sites/${DOMAIN}/proxy/
+PANEL="/opt/1panel"
+cp -f docs/openresty/proxy/netbird-server.conf "${PANEL}/www/sites/${DOMAIN}/proxy/"
+cp -f docs/openresty/proxy/root.conf "${PANEL}/www/sites/${DOMAIN}/proxy/"
 ```
 
-3. 按 **[docs/1panel-openresty.md](../docs/1panel-openresty.md)** 补充 `conf.d` 超时、执行 `openresty -t` 与验证
+3. 按 **[docs/openresty/1panel-openresty.md](../docs/openresty/1panel-openresty.md)** 补充 `conf.d` 超时、执行 `openresty -t` 与验证
 
-安装后 `data/openresty-snippet.conf` 仅供参考；**以 `docs/proxy/` 为准**。
+安装后 `data/openresty-snippet.conf` 仅供参考；**以 `docs/openresty/proxy/` 为准**。
 
 ### 4. 初始化管理员
 
@@ -108,8 +109,8 @@ dashboard 容器              netbird-server 容器
 
 ## 参考
 
-- **[1Panel OpenResty 配置（必读）](../docs/1panel-openresty.md)**
-- **[docs/proxy/ 可覆盖的代理文件](../docs/proxy/README.md)**
+- **[1Panel OpenResty 配置（必读）](../docs/openresty/1panel-openresty.md)**
+- **[docs/openresty/proxy/ 可覆盖的代理文件](../docs/openresty/proxy/README.md)**
 - [NetBird 文档](https://docs.netbird.io/selfhosted/selfhosted-quickstart)
 - [1Panel 自助创建应用](https://bbs.fit2cloud.com/t/topic/7409)
 - 金样配置：`reference/golden/`（由官方 `getting-started.sh` 生成）

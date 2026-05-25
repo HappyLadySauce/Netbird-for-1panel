@@ -1,0 +1,14 @@
+additionalProperties:
+    key: Traefik
+    name: Traefik
+    tags:
+        - Tool
+        - WebSite
+    shortDescZh: 云原生反向代理与负载均衡（Docker 自动发现）
+    shortDescEn: Cloud-native reverse proxy and load balancer (Docker provider)
+    type: website
+    crossVersionUpdate: true
+    limit: 0
+    website: https://traefik.io/
+    github: https://github.com/traefik/traefik
+    document: https://doc.traefik.io/traefik/

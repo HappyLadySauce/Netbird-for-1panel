@@ -1,0 +1,50 @@
+additionalProperties:
+    formFields:
+        - default: 8088
+          edit: true
+          envKey: PANEL_APP_PORT_HTTP
+          labelEn: Dashboard port on 127.0.0.1 (avoid conflicts with other apps)
+          labelZh: Dashboard 本机端口（127.0.0.1，勿与已占用端口冲突）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 8880
+          edit: true
+          envKey: TRAEFIK_HTTP_PORT
+          labelEn: HTTP entrypoint host port (default 8880; 1Panel OpenResty uses 80)
+          labelZh: HTTP 入口宿主机端口（默认 8880；1Panel 已占用 80）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 8443
+          edit: true
+          envKey: TRAEFIK_HTTPS_PORT
+          labelEn: HTTPS entrypoint host port (default 8443; 1Panel OpenResty uses 443)
+          labelZh: HTTPS 入口宿主机端口（默认 8443；1Panel 已占用 443）
+          required: true
+          rule: paramPort
+          type: number
+        - default: admin
+          edit: true
+          envKey: TRAEFIK_DASHBOARD_USER
+          labelEn: Dashboard username
+          labelZh: Dashboard 用户名
+          required: true
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: TRAEFIK_DASHBOARD_PASSWORD
+          labelEn: Dashboard password (auto-generated if empty)
+          labelZh: Dashboard 密码（留空自动生成）
+          required: false
+          rule: paramComplexity
+          type: password
+        - default: ""
+          edit: true
+          envKey: TRAEFIK_ACME_EMAIL
+          labelEn: ACME email for Let's Encrypt (empty = disabled)
+          labelZh: Let's Encrypt 邮箱（留空则关闭自动证书）
+          required: false
+          rule: paramCommon
+          type: text

@@ -22,14 +22,14 @@ DOMAIN="netbird.example.com"
 PANEL_WWW="/opt/1panel/www"
 
 install -d "${PANEL_WWW}/sites/${DOMAIN}/proxy"
-cp -f docs/proxy/netbird-server.conf "${PANEL_WWW}/sites/${DOMAIN}/proxy/"
-cp -f docs/proxy/root.conf "${PANEL_WWW}/sites/${DOMAIN}/proxy/"
+cp -f docs/openresty/proxy/netbird-server.conf "${PANEL_WWW}/sites/${DOMAIN}/proxy/"
+cp -f docs/openresty/proxy/root.conf "${PANEL_WWW}/sites/${DOMAIN}/proxy/"
 
 docker exec "$(docker ps --format '{{.Names}}' | grep -i openresty | head -1)" openresty -t \
   && docker exec "$(docker ps --format '{{.Names}}' | grep -i openresty | head -1)" openresty -s reload
 ```
 
-在仓库根目录执行；若已在别处的克隆目录，把 `docs/proxy/` 换成实际路径。
+在仓库根目录执行；若已在别处的克隆目录，把 `docs/openresty/proxy/` 换成实际路径。
 
 ## 与 1Panel 面板的关系
 
