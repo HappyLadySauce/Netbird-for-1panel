@@ -43,8 +43,8 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_RELAY_AUTH_SECRET
-          labelEn: Relay auth secret (auto if empty)
-          labelZh: Relay 认证密钥（留空自动生成）
+          labelEn: Relay auth secret (auto if empty; base64 allowed)
+          labelZh: Relay 认证密钥（留空自动生成，支持 base64 含 /+=）
           required: false
-          rule: paramComplexity
+          rule: paramCommon
           type: password

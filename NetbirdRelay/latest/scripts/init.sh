@@ -31,29 +31,41 @@ validate_port() {
 validate_tls_mode() {
     local m="${1:-}"
     case "${m}" in
-        openresty_cert|letsencrypt_builtin|custom_cert) ;;
-        *) fail "NETBIRD_RELAY_TLS_MODE must be openresty_cert, letsencrypt_builtin, or custom_cert" ;;
+        letsencrypt_builtin|custom_cert) ;;
+        openresty_cert)
+            fail "openresty_cert is removed; use custom_cert and set certificate file paths on the install form"
+            ;;
+        *) fail "NETBIRD_RELAY_TLS_MODE must be custom_cert or letsencrypt_builtin" ;;
     esac
+}
+
+validate_auth_secret() {
+    local s="${1:-}"
+    [[ -n "${s}" ]] || fail "NETBIRD_RELAY_AUTH_SECRET is required"
+    local len=${#s}
+    (( len >= 16 && len <= 256 )) || fail "NETBIRD_RELAY_AUTH_SECRET length must be 16-256 characters"
+    if [[ ! "${s}" =~ ^[A-Za-z0-9+/=_-]+$ ]]; then
+        fail "NETBIRD_RELAY_AUTH_SECRET contains invalid characters (allowed: A-Za-z0-9 + / = _ -)"
+    fi
 }
 
 relay_load_env "${BASE_DIR}" || true
 
 NETBIRD_RELAY_DOMAIN="${NETBIRD_RELAY_DOMAIN:-}"
 NETBIRD_RELAY_AUTH_SECRET="${NETBIRD_RELAY_AUTH_SECRET:-}"
-NETBIRD_RELAY_TLS_MODE="${NETBIRD_RELAY_TLS_MODE:-openresty_cert}"
+NETBIRD_RELAY_TLS_MODE="${NETBIRD_RELAY_TLS_MODE:-custom_cert}"
 NETBIRD_RELAY_LOCAL_PORT="${NETBIRD_RELAY_LOCAL_PORT:-33080}"
 NETBIRD_RELAY_PUBLIC_PORT="${NETBIRD_RELAY_PUBLIC_PORT:-443}"
 NETBIRD_STUN_PORT="${NETBIRD_STUN_PORT:-3478}"
 NETBIRD_LETSENCRYPT_EMAIL="${NETBIRD_LETSENCRYPT_EMAIL:-}"
-NETBIRD_RELAY_CERT_DIR="${NETBIRD_RELAY_CERT_DIR:-}"
 NETBIRD_TLS_CERT_FILE="${NETBIRD_TLS_CERT_FILE:-}"
 NETBIRD_TLS_KEY_FILE="${NETBIRD_TLS_KEY_FILE:-}"
 
 [[ -n "${NETBIRD_RELAY_DOMAIN}" ]] || fail "NETBIRD_RELAY_DOMAIN is required"
-[[ -n "${NETBIRD_RELAY_AUTH_SECRET}" ]] || fail "NETBIRD_RELAY_AUTH_SECRET is required (copy authSecret from main NetBird config.yaml)"
 
 validate_domain "${NETBIRD_RELAY_DOMAIN}"
 validate_tls_mode "${NETBIRD_RELAY_TLS_MODE}"
+validate_auth_secret "${NETBIRD_RELAY_AUTH_SECRET}"
 validate_port "NETBIRD_RELAY_LOCAL_PORT" "${NETBIRD_RELAY_LOCAL_PORT}"
 validate_port "NETBIRD_RELAY_PUBLIC_PORT" "${NETBIRD_RELAY_PUBLIC_PORT}"
 validate_port "NETBIRD_STUN_PORT" "${NETBIRD_STUN_PORT}"
@@ -66,8 +78,6 @@ mkdir -p "${DATA_DIR}/relay-data"
 
 NB_EXPOSED="rels://${NETBIRD_RELAY_DOMAIN}:${NETBIRD_RELAY_PUBLIC_PORT}"
 RELAY_ENV_EXTRA=""
-OVERRIDE_VOLUMES=""
-CERT_HOST_DIR=""
 
 case "${NETBIRD_RELAY_TLS_MODE}" in
     letsencrypt_builtin)
@@ -91,45 +101,15 @@ services:
       - ./data/relay-data:/data
 OEOF
         ;;
-    openresty_cert)
-        NB_LISTEN=":${NETBIRD_RELAY_LOCAL_PORT}"
-        panel_root=""
-        panel_root="$(relay_panel_root 2>/dev/null || true)"
-        if [[ -z "${NETBIRD_RELAY_CERT_DIR}" ]]; then
-            if [[ -n "${panel_root}" ]]; then
-                NETBIRD_RELAY_CERT_DIR="${panel_root}/www/sites/${NETBIRD_RELAY_DOMAIN}/ssl"
-            else
-                NETBIRD_RELAY_CERT_DIR="/opt/1panel/www/sites/${NETBIRD_RELAY_DOMAIN}/ssl"
-            fi
-        fi
-        [[ -f "${NETBIRD_RELAY_CERT_DIR}/fullchain.pem" ]] || fail "Certificate not found: ${NETBIRD_RELAY_CERT_DIR}/fullchain.pem (create 1Panel HTTPS site first)"
-        [[ -f "${NETBIRD_RELAY_CERT_DIR}/privkey.pem" ]] || fail "Private key not found: ${NETBIRD_RELAY_CERT_DIR}/privkey.pem"
-        CERT_HOST_DIR="${NETBIRD_RELAY_CERT_DIR}"
-        RELAY_ENV_EXTRA=$(cat <<OCEOF
-
-NB_TLS_CERT_FILE=/certs/fullchain.pem
-NB_TLS_KEY_FILE=/certs/privkey.pem
-OCEOF
-)
-        cat > "${BASE_DIR}/docker-compose.override.yml" <<OEOF
-services:
-  relay:
-    ports:
-      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
-      - "127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
-    volumes:
-      - ./data/relay-data:/data
-      - ${CERT_HOST_DIR}:/certs:ro
-OEOF
-        ;;
     custom_cert)
-        [[ -n "${NETBIRD_TLS_CERT_FILE}" && -f "${NETBIRD_TLS_CERT_FILE}" ]] || fail "NETBIRD_TLS_CERT_FILE must point to an existing file"
-        [[ -n "${NETBIRD_TLS_KEY_FILE}" && -f "${NETBIRD_TLS_KEY_FILE}" ]] || fail "NETBIRD_TLS_KEY_FILE must point to an existing file"
+        [[ -n "${NETBIRD_TLS_CERT_FILE}" && -f "${NETBIRD_TLS_CERT_FILE}" ]] \
+            || fail "NETBIRD_TLS_CERT_FILE must point to an existing certificate file on the host"
+        [[ -n "${NETBIRD_TLS_KEY_FILE}" && -f "${NETBIRD_TLS_KEY_FILE}" ]] \
+            || fail "NETBIRD_TLS_KEY_FILE must point to an existing private key file on the host"
         cert_dir="$(dirname "${NETBIRD_TLS_CERT_FILE}")"
         cert_base="$(basename "${NETBIRD_TLS_CERT_FILE}")"
         key_base="$(basename "${NETBIRD_TLS_KEY_FILE}")"
         NB_LISTEN=":${NETBIRD_RELAY_LOCAL_PORT}"
-        CERT_HOST_DIR="${cert_dir}"
         RELAY_ENV_EXTRA=$(cat <<CCEOF
 
 NB_TLS_CERT_FILE=/certs/${cert_base}
@@ -144,7 +124,7 @@ services:
       - "127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
     volumes:
       - ./data/relay-data:/data
-      - ${CERT_HOST_DIR}:/certs:ro
+      - ${cert_dir}:/certs:ro
 OEOF
         ;;
 esac
@@ -161,9 +141,10 @@ EOF
 
 chmod 600 "${DATA_DIR}/relay.env" 2>/dev/null || true
 
-cat > "${DATA_DIR}/openresty-relay-stream.conf" <<NGXEOF
-# NetBird external relay — OpenResty stream TLS passthrough (ssl_preread)
-# Place inside the http {} sibling stream {} block, or include from conf.d/stream.conf
+if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
+    cat > "${DATA_DIR}/openresty-relay-stream.conf" <<NGXEOF
+# NetBird external relay — OpenResty stream TLS passthrough (optional when OpenResty holds :443)
+# 当本机 443 由 1Panel OpenResty 占用时，在 stream {} 中 include 本文件
 # Domain: ${NETBIRD_RELAY_DOMAIN}  |  Backend: 127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}
 
 upstream netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_} {
@@ -178,6 +159,7 @@ server {
     proxy_timeout 1d;
 }
 NGXEOF
+fi
 
 cat > "${DATA_DIR}/main-server-config-snippet.yaml" <<SNIPEOF
 # Paste into main NetBird server config.yaml (after enabling external relays)
@@ -202,9 +184,9 @@ log "Wrote ${DATA_DIR}/relay.env"
 log "Wrote ${BASE_DIR}/docker-compose.override.yml (TLS mode: ${NETBIRD_RELAY_TLS_MODE})"
 log "Exposed relay: ${NB_EXPOSED}"
 log "STUN UDP port: ${NETBIRD_STUN_PORT}"
-if [[ "${NETBIRD_RELAY_TLS_MODE}" != "letsencrypt_builtin" ]]; then
-    log "OpenResty stream snippet: ${DATA_DIR}/openresty-relay-stream.conf"
-    log "Install stream config on this host, then: openresty -t && openresty -s reload"
+if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
+    log "TLS cert: ${NETBIRD_TLS_CERT_FILE}"
+    log "OpenResty stream (optional, if :443 is on OpenResty): ${DATA_DIR}/openresty-relay-stream.conf"
 fi
 log "Main server YAML snippet: ${DATA_DIR}/main-server-config-snippet.yaml"
 

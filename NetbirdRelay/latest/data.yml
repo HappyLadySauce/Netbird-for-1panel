@@ -11,24 +11,40 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_RELAY_AUTH_SECRET
-          labelEn: Relay auth secret (must match main NetBird server authSecret)
-          labelZh: Relay 认证密钥（必须与主 NetBird 的 authSecret 一致）
+          labelEn: Relay auth secret (same as main NetBird authSecret; base64 allowed)
+          labelZh: Relay 认证密钥（与主 NetBird authSecret 一致，支持 base64 含 /+=）
           required: true
-          rule: paramComplexity
+          rule: paramCommon
           type: password
-        - default: openresty_cert
+        - default: custom_cert
           edit: true
           envKey: NETBIRD_RELAY_TLS_MODE
-          labelEn: TLS mode (openresty_cert | letsencrypt_builtin | custom_cert)
-          labelZh: TLS 模式（openresty_cert | letsencrypt_builtin | custom_cert）
+          labelEn: TLS mode (custom_cert | letsencrypt_builtin)
+          labelZh: TLS 模式（custom_cert 自填证书 | letsencrypt_builtin 容器申请）
           required: true
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_TLS_CERT_FILE
+          labelEn: TLS certificate file on host (required for custom_cert)
+          labelZh: TLS 证书文件路径（custom_cert 必填，如 .../ssl/fullchain.pem）
+          required: false
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_TLS_KEY_FILE
+          labelEn: TLS private key file on host (required for custom_cert)
+          labelZh: TLS 私钥文件路径（custom_cert 必填，如 .../ssl/privkey.pem）
+          required: false
           rule: paramCommon
           type: text
         - default: 33080
           edit: true
           envKey: NETBIRD_RELAY_LOCAL_PORT
-          labelEn: Relay local TCP port (127.0.0.1 bind for openresty_cert/custom_cert)
-          labelZh: Relay 本机 TCP 端口（openresty_cert/custom_cert 时绑定 127.0.0.1）
+          labelEn: Relay local TCP port (127.0.0.1; use with OpenResty stream on 443)
+          labelZh: Relay 本机 TCP 端口（绑定 127.0.0.1；公网 443 由 OpenResty stream 透传）
           required: true
           rule: paramPort
           type: number
@@ -51,32 +67,8 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_LETSENCRYPT_EMAIL
-          labelEn: Let's Encrypt email (required for letsencrypt_builtin)
-          labelZh: Let's Encrypt 邮箱（letsencrypt_builtin 模式必填）
-          required: false
-          rule: paramCommon
-          type: text
-        - default: ""
-          edit: true
-          envKey: NETBIRD_RELAY_CERT_DIR
-          labelEn: 1Panel site SSL dir (empty = /opt/1panel/www/sites/<domain>/ssl)
-          labelZh: 1Panel 站点证书目录（留空则自动使用 /opt/1panel/www/sites/<域名>/ssl）
-          required: false
-          rule: paramCommon
-          type: text
-        - default: ""
-          edit: true
-          envKey: NETBIRD_TLS_CERT_FILE
-          labelEn: Custom TLS cert file on host (custom_cert mode)
-          labelZh: 自定义证书文件路径（custom_cert 模式）
-          required: false
-          rule: paramCommon
-          type: text
-        - default: ""
-          edit: true
-          envKey: NETBIRD_TLS_KEY_FILE
-          labelEn: Custom TLS key file on host (custom_cert mode)
-          labelZh: 自定义私钥文件路径（custom_cert 模式）
+          labelEn: Let's Encrypt email (only for letsencrypt_builtin)
+          labelZh: Let's Encrypt 邮箱（仅 letsencrypt_builtin 模式）
           required: false
           rule: paramCommon
           type: text

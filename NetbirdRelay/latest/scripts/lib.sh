@@ -61,7 +61,7 @@ relay_host_tcp_port_taken() {
 }
 
 relay_assert_ports_free() {
-    local tls_mode="${NETBIRD_RELAY_TLS_MODE:-openresty_cert}"
+    local tls_mode="${NETBIRD_RELAY_TLS_MODE:-custom_cert}"
     local local_port="${NETBIRD_RELAY_LOCAL_PORT:-33080}"
     local stun_port="${NETBIRD_STUN_PORT:-3478}"
     local busy=""
@@ -71,11 +71,11 @@ relay_assert_ports_free() {
             relay_host_tcp_port_taken "80" && busy="${busy} HTTP(:80)"
             relay_host_tcp_port_taken "443" && busy="${busy} HTTPS(:443)"
             ;;
-        openresty_cert|custom_cert)
+        custom_cert)
             relay_tcp_port_taken "127.0.0.1" "${local_port}" && busy="${busy} Relay(127.0.0.1:${local_port})"
             ;;
         *)
-            relay_fail "Invalid NETBIRD_RELAY_TLS_MODE: ${tls_mode} (use openresty_cert, letsencrypt_builtin, or custom_cert)"
+            relay_fail "Invalid NETBIRD_RELAY_TLS_MODE: ${tls_mode} (use custom_cert or letsencrypt_builtin)"
             ;;
     esac
 
@@ -95,18 +95,4 @@ relay_compose_down() {
         (cd "${base_dir}" && docker-compose --env-file "${base_dir}/.env" down --remove-orphans 2>/dev/null) || true
     fi
     relay_cleanup_stale_containers
-}
-
-relay_panel_root() {
-    if [[ -n "${ONEPANEL_ROOT:-}" && -d "${ONEPANEL_ROOT}/www/sites" ]]; then
-        printf '%s\n' "${ONEPANEL_ROOT}"
-        return 0
-    fi
-    for candidate in /opt/1panel /usr/local/1panel; do
-        if [[ -d "${candidate}/www/sites" ]]; then
-            printf '%s\n' "${candidate}"
-            return 0
-        fi
-    done
-    return 1
 }
