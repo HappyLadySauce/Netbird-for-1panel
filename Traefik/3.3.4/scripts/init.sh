@@ -94,6 +94,8 @@ log:
   level: INFO
 
 entryPoints:
+  traefik:
+    address: ":8080"
   web:
     address: ":80"
   websecure:

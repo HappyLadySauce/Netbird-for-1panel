@@ -1,6 +1,6 @@
 # Traefik（1Panel 本地应用）
 
-在 1Panel 中安装 **Traefik v3.3** 反向代理，通过 **Docker Provider** 自动发现同网络容器上的路由标签，默认与 **1Panel OpenResty** 错开端口（HTTP `8880` / HTTPS `8443`），避免占用 80/443。
+在 1Panel 中安装 **Traefik v3.6** 反向代理，通过 **Docker Provider** 自动发现同网络容器上的路由标签，默认与 **1Panel OpenResty** 错开端口（HTTP `8880` / HTTPS `8443`），避免占用 80/443。
 
 ## 前置条件
 
@@ -77,6 +77,22 @@ Dashboard → 127.0.0.1:<端口>/dashboard/
 
 - 升级：1Panel 应用升级或 `scripts/upgrade.sh`
 - 卸载：`REMOVE_DATA=1 bash scripts/uninstall.sh` 可删除 `data/`
+
+## 故障排查
+
+| 现象 | 原因 | 处理 |
+|------|------|------|
+| `client version 1.24 is too old` / `Minimum supported API version is 1.44` | 宿主机 **Docker 29+** 提高了最低 API 版本，旧版 Traefik v3.3 无法连接 Docker | 使用本包 **traefik:v3.6** 镜像；在 1Panel 中升级应用或 `docker compose pull` 后重启 |
+| `EntryPoint doesn't exist entryPointName=traefik` | 静态配置未声明 `traefik` 入口（Dashboard 端口 8080） | 重新执行安装/升级触发的 `init.sh`，或于 `data/traefik.yml` 的 `entryPoints` 下加入 `traefik: address: ":8080"` |
+| Dashboard `502` | 上述两项未修复时，8080 上无有效路由 | 修好配置并 `docker restart <容器名>`；访问 `http://127.0.0.1:<Dashboard端口>/dashboard/`（账号见 `data/credentials.env`） |
+
+**已安装实例快速修复**（在 1Panel 应用目录，如 `/opt/1panel/apps/local/Traefik/Traefik/3.3.4/`）：
+
+```bash
+cd /opt/1panel/apps/local/Traefik/Traefik/3.3.4   # 路径以面板实际为准
+bash scripts/init.sh
+docker compose pull && docker compose up -d
+```
 
 ## 参考
 

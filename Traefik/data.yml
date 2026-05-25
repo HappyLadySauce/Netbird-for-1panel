@@ -4,8 +4,8 @@ additionalProperties:
     tags:
         - Tool
         - WebSite
-    shortDescZh: 云原生反向代理与负载均衡（Docker 自动发现）
-    shortDescEn: Cloud-native reverse proxy and load balancer (Docker provider)
+    shortDescZh: 云原生反向代理（Docker 自动发现，兼容 Docker 29+）
+    shortDescEn: Cloud-native reverse proxy (Docker provider, Docker 29+ compatible)
     type: website
     crossVersionUpdate: true
     limit: 0
