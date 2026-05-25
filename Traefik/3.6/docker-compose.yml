@@ -8,7 +8,7 @@ services:
     networks:
       - 1panel-network
     ports:
-      - "127.0.0.1:${PANEL_APP_PORT_HTTP}:8080"
+      - "${TRAEFIK_DASHBOARD_BIND:-127.0.0.1}:${PANEL_APP_PORT_HTTP}:8080"
       - "${TRAEFIK_HTTP_PORT}:80"
       - "${TRAEFIK_HTTPS_PORT}:443"
     volumes:

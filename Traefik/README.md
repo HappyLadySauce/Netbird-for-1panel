@@ -20,7 +20,7 @@
 /opt/1panel/resource/apps/local/Traefik
 ```
 
-在 **应用商店 → 更新应用列表** 后安装 **Traefik 3.3.4**。
+在 **应用商店 → 更新应用列表** 后安装 **Traefik 3.6**。
 
 或使用仓库安装脚本（与 NetBird 一并安装）：
 
@@ -33,7 +33,8 @@ sh install.sh
 
 | 字段 | 说明 |
 |------|------|
-| Dashboard 本机端口 | 默认 `8088`，仅 `127.0.0.1` |
+| Dashboard 监听地址 | 默认 `127.0.0.1`（仅本机）；需 Tailscale/局域网访问填 `0.0.0.0` |
+| Dashboard 宿主机端口 | 默认 `8088`（映射容器 `8080`） |
 | HTTP 宿主机端口 | 默认 `8880`（勿与 OpenResty 的 80 冲突） |
 | HTTPS 宿主机端口 | 默认 `8443`（勿与 OpenResty 的 443 冲突） |
 | Dashboard 用户名 | 默认 `admin` |
@@ -43,10 +44,17 @@ sh install.sh
 ### 3. 访问 Dashboard
 
 ```text
-http://127.0.0.1:<Dashboard端口>/dashboard/
+http://<监听地址>:<Dashboard端口>/dashboard/
 ```
 
-用户名/密码见 `data/credentials.env`。
+默认仅本机：`http://127.0.0.1:8088/dashboard/`。用户名/密码见 `data/credentials.env`（需 Basic Auth）：
+
+```bash
+source data/credentials.env
+curl -u "${TRAEFIK_DASHBOARD_USER}:${TRAEFIK_DASHBOARD_PASSWORD}" -I "http://127.0.0.1:8088/dashboard/"
+```
+
+若要从 Tailscale（如 `100.100.100.10`）访问，安装时把 **Dashboard 监听地址** 设为 `0.0.0.0`，重启应用后再访问。
 
 ### 4. 为容器开启路由
 
@@ -84,12 +92,14 @@ Dashboard → 127.0.0.1:<端口>/dashboard/
 |------|------|------|
 | `client version 1.24 is too old` / `Minimum supported API version is 1.44` | 宿主机 **Docker 29+** 提高了最低 API 版本，旧版 Traefik v3.3 无法连接 Docker | 使用本包 **traefik:v3.6** 镜像；在 1Panel 中升级应用或 `docker compose pull` 后重启 |
 | `EntryPoint doesn't exist entryPointName=traefik` | 静态配置未声明 `traefik` 入口（Dashboard 端口 8080） | 重新执行安装/升级触发的 `init.sh`，或于 `data/traefik.yml` 的 `entryPoints` 下加入 `traefik: address: ":8080"` |
-| Dashboard `502` | 上述两项未修复时，8080 上无有效路由 | 修好配置并 `docker restart <容器名>`；访问 `http://127.0.0.1:<Dashboard端口>/dashboard/`（账号见 `data/credentials.env`） |
+| Dashboard `502` / `curl` 无响应 | 8080 路由未就绪，或用非本机 IP 访问但端口只绑在 `127.0.0.1` | 先 `curl -I http://127.0.0.1:8088/dashboard/`（应 `401`）；外网/Tailscale 访问请将监听地址改为 `0.0.0.0` 并重启 |
+| `curl 100.x.x.x:8088` 不通 | `ss` 显示 `127.0.0.1:8088` 时，该 IP 无法直连 Dashboard | 用 `127.0.0.1:8088` 或改绑定 `0.0.0.0` |
+| 填了密码仍无法登录 | 旧版 `init.sh` 把 `$apr1$` 写成 `$$apr1$$`，哈希无效 | 更新应用包后执行 `bash scripts/init.sh`（会生成 `dynamic/.htpasswd`）并重启 |
 
-**已安装实例快速修复**（在 1Panel 应用目录，如 `/opt/1panel/apps/local/Traefik/Traefik/3.3.4/`）：
+**已安装实例快速修复**（在 1Panel 应用目录，如 `/opt/1panel/apps/local/Traefik/Traefik/3.6/`）：
 
 ```bash
-cd /opt/1panel/apps/local/Traefik/Traefik/3.3.4   # 路径以面板实际为准
+cd /opt/1panel/apps/local/Traefik/Traefik/3.6   # 路径以面板实际为准
 bash scripts/init.sh
 docker compose pull && docker compose up -d
 ```

@@ -24,10 +24,6 @@ htpasswd_apr1() {
     printf '%s:%s' "${user}" "${hash}"
 }
 
-yaml_escape_dollars() {
-    printf '%s' "$1" | sed 's/\$/$$/g'
-}
-
 validate_port() {
     local name="$1" val="$2"
     [[ "$val" =~ ^[0-9]+$ ]] || fail "${name} must be a number"
@@ -59,9 +55,10 @@ traefik_assert_ports_free
 
 [[ -n "${TRAEFIK_DASHBOARD_PASSWORD}" ]] || TRAEFIK_DASHBOARD_PASSWORD="$(rand_pass)"
 DASHBOARD_HTPASSWD="$(htpasswd_apr1 "${TRAEFIK_DASHBOARD_USER}" "${TRAEFIK_DASHBOARD_PASSWORD}")"
-DASHBOARD_HTPASSWD_YAML="$(yaml_escape_dollars "${DASHBOARD_HTPASSWD}")"
 
 mkdir -p "${DYNAMIC_DIR}"
+printf '%s\n' "${DASHBOARD_HTPASSWD}" > "${DYNAMIC_DIR}/.htpasswd"
+chmod 600 "${DYNAMIC_DIR}/.htpasswd" 2>/dev/null || true
 
 if [[ ! -f "${DATA_DIR}/acme.json" ]]; then
     echo '{}' > "${DATA_DIR}/acme.json"
@@ -126,8 +123,7 @@ http:
   middlewares:
     dashboard-auth:
       basicAuth:
-        users:
-          - "${DASHBOARD_HTPASSWD_YAML}"
+        usersFile: /etc/traefik/dynamic/.htpasswd
 EOF
 
 cat > "${DATA_DIR}/credentials.env" <<EOF
@@ -136,8 +132,8 @@ TRAEFIK_DASHBOARD_PASSWORD=${TRAEFIK_DASHBOARD_PASSWORD}
 EOF
 chmod 600 "${DATA_DIR}/credentials.env" "${DATA_DIR}/traefik.yml" 2>/dev/null || true
 
-log "Wrote ${DATA_DIR}/traefik.yml and dynamic/dashboard.yaml"
-log "Dashboard: http://127.0.0.1:${PANEL_APP_PORT_HTTP}/dashboard/ (user: ${TRAEFIK_DASHBOARD_USER})"
+log "Wrote ${DATA_DIR}/traefik.yml, dynamic/dashboard.yaml and dynamic/.htpasswd"
+log "Dashboard: http://${TRAEFIK_DASHBOARD_BIND:-127.0.0.1}:${PANEL_APP_PORT_HTTP}/dashboard/ (user: ${TRAEFIK_DASHBOARD_USER})"
 log "HTTP entrypoint: :${TRAEFIK_HTTP_PORT}  |  HTTPS entrypoint: :${TRAEFIK_HTTPS_PORT}"
 log "Credentials saved to ${DATA_DIR}/credentials.env"
 if [[ -n "${TRAEFIK_ACME_EMAIL}" ]]; then

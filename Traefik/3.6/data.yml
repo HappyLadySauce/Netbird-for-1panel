@@ -1,10 +1,18 @@
 additionalProperties:
     formFields:
+        - default: 127.0.0.1
+          edit: true
+          envKey: TRAEFIK_DASHBOARD_BIND
+          labelEn: Dashboard bind IP (127.0.0.1=local only; 0.0.0.0=LAN/Tailscale)
+          labelZh: Dashboard 监听地址（127.0.0.1=仅本机；0.0.0.0=局域网/ Tailscale 可访问）
+          required: true
+          rule: paramCommon
+          type: text
         - default: 8088
           edit: true
           envKey: PANEL_APP_PORT_HTTP
-          labelEn: Dashboard port on 127.0.0.1 (avoid conflicts with other apps)
-          labelZh: Dashboard 本机端口（127.0.0.1，勿与已占用端口冲突）
+          labelEn: Dashboard host port (maps to container :8080)
+          labelZh: Dashboard 宿主机端口（映射容器 8080，勿与已占用端口冲突）
           required: true
           rule: paramPort
           type: number

@@ -52,12 +52,17 @@ traefik_host_port_taken() {
 }
 
 traefik_assert_ports_free() {
+    local dash_bind="${TRAEFIK_DASHBOARD_BIND:-127.0.0.1}"
     local dash_port="${PANEL_APP_PORT_HTTP:-8088}"
     local http_port="${TRAEFIK_HTTP_PORT:-8880}"
     local https_port="${TRAEFIK_HTTPS_PORT:-8443}"
     local busy=""
 
-    traefik_tcp_port_taken "127.0.0.1" "${dash_port}" && busy="${busy} Dashboard(127.0.0.1:${dash_port})"
+    if [[ "${dash_bind}" == "0.0.0.0" || "${dash_bind}" == "::" ]]; then
+        traefik_host_port_taken "${dash_port}" && busy="${busy} Dashboard(0.0.0.0:${dash_port})"
+    else
+        traefik_tcp_port_taken "${dash_bind}" "${dash_port}" && busy="${busy} Dashboard(${dash_bind}:${dash_port})"
+    fi
     traefik_host_port_taken "${http_port}" && busy="${busy} HTTP(:${http_port})"
     traefik_host_port_taken "${https_port}" && busy="${busy} HTTPS(:${https_port})"
 
