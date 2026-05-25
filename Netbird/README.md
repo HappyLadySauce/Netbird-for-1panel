@@ -120,6 +120,8 @@ dashboard 容器              netbird-server 容器
 
 ## 扩展外部 Relay / STUN
 
+当主控与 Relay **不在同一台机器** 时，请优先阅读 **[双节点部署指南](../docs/双节点部署指南.md)**（角色分工、表单、主控 `config.yaml`、验证清单）。
+
 当需要多区域中继时，在**独立公网 VPS** 上安装本仓库的 **[NetbirdRelay](../NetbirdRelay/README.md)** 应用（仅 `netbirdio/relay`，含内置 STUN）。**不要**在 Relay 机器上再部署完整 NetBird 控制面。
 
 ### 1. 获取共享密钥

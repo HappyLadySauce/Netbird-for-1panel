@@ -2,6 +2,8 @@
 
 在**独立公网 VPS** 上仅部署 [NetBird 外部 Relay](https://docs.netbird.io/selfhosted/maintenance/scaling/set-up-external-relays)（`netbirdio/relay` + 内置 STUN），**不**包含 Management、Dashboard、Signal 或数据库。
 
+**双节点（主控 + 本机 Relay）完整步骤**见 **[docs/双节点部署指南.md](../docs/双节点部署指南.md)**。
+
 ## 安装表单
 
 | 字段 | 说明 |

@@ -22,8 +22,17 @@ docs/
     relay/                        # 外部 Relay stream 透传配置
       relay-stream.conf
       README.md
+    双节点部署指南.md           # 主控机 + Relay 机分工与配置（推荐阅读）
 reference/golden/                 # 官方脚本生成的参考配置
 ```
+
+## 部署文档
+
+| 场景 | 文档 |
+|------|------|
+| **两台机器：主控 + 外部 Relay/STUN** | **[docs/双节点部署指南.md](docs/双节点部署指南.md)** |
+| 单机主控 + OpenResty | [Netbird/README.md](Netbird/README.md) |
+| 仅 Relay 节点 | [NetbirdRelay/README.md](NetbirdRelay/README.md) |
 
 ## 快速开始
 
@@ -43,9 +52,11 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 
 然后在 **应用商店 → 更新应用列表** 中安装 **NetBird** 与 **Traefik**（`install.sh` 会写入全部本地应用包）。NetBird 按 [Netbird/README.md](Netbird/README.md) 填写安装表单。
 
-### 外部 Relay / STUN 节点（可选）
+### 外部 Relay / STUN 节点（双节点）
 
-在**另一台**公网 VPS 上安装 **NetBird Relay** 应用（仅 `netbirdio/relay`），用于多区域中继。不要部署第二个完整 NetBird 控制面。步骤见 **[NetbirdRelay/README.md](NetbirdRelay/README.md)**；主控需在 `config.yaml` 登记 `rels://` 与 `stun:`，见 [Netbird/README.md — 扩展外部 Relay](Netbird/README.md#扩展外部-relay--stun)。
+主控与 Relay **分机部署**时，请直接按 **[docs/双节点部署指南.md](docs/双节点部署指南.md)** 操作（写清每台机器装什么、填什么、`config.yaml` 怎么改、如何验证）。
+
+简要原则：Relay 机只装 **NetBird Relay**；主控 `config.yaml` 的 `stuns` / `relays` 填 **Relay 机域名与端口**（勿写主控 `vpn` 域名）。
 
 ### 2. 配置 OpenResty（必做，不能只在面板里点反代）
 
