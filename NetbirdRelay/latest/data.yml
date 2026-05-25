@@ -37,28 +37,28 @@ additionalProperties:
           labelZh: TLS 私钥文件路径（custom_cert 必填，宿主机绝对路径）
           required: false
           type: text
-        - default: 33080
-          edit: true
-          envKey: NETBIRD_RELAY_LOCAL_PORT
-          labelEn: Relay container TCP port (container listens here; host maps public port to it)
-          labelZh: Relay 容器内 TCP 端口（容器监听；宿主机将公网端口映射到此端口）
-          required: true
-          rule: paramPort
-          type: number
         - default: 443
           edit: true
-          envKey: NETBIRD_RELAY_PUBLIC_PORT
-          labelEn: Host + rels:// public TCP port (published by Docker in custom_cert mode)
-          labelZh: 宿主机与 rels:// 公网 TCP 端口（custom_cert 下由 Docker 直接映射暴露）
+          envKey: PANEL_APP_PORT_HTTP
+          labelEn: Relay TCP port (rels:// URL; use with 「External port access」 in advanced settings)
+          labelZh: Relay TCP 端口（rels:// 地址；高级设置中勾选「端口外部访问」以放行防火墙）
           required: true
           rule: paramPort
           type: number
         - default: 3478
           edit: true
-          envKey: NETBIRD_STUN_PORT
-          labelEn: STUN UDP port (host, not proxied by OpenResty)
-          labelZh: STUN UDP 端口（宿主机直连，不经 OpenResty）
+          envKey: PANEL_APP_PORT_STUN
+          labelEn: STUN UDP port (use with 「External port access」 in advanced settings)
+          labelZh: STUN UDP 端口（高级设置中勾选「端口外部访问」以放行防火墙）
           required: true
+          rule: paramPort
+          type: number
+        - default: 80
+          edit: true
+          envKey: PANEL_APP_PORT_ACME
+          labelEn: HTTP port for Let's Encrypt (letsencrypt_builtin only; default 80)
+          labelZh: Let's Encrypt HTTP 端口（仅 letsencrypt_builtin；默认 80）
+          required: false
           rule: paramPort
           type: number
         - default: ""

@@ -5,6 +5,18 @@
 relay_log() { echo "[netbird-relay] $*"; }
 relay_fail() { relay_log "ERROR: $*"; exit 1; }
 
+# Docker ports line for 1Panel: env keys must use PANEL_APP_PORT_* prefix so
+# 「端口外部访问」 can open firewall; HOST_IP is empty (0.0.0.0) when checked, else 127.0.0.1.
+# 1Panel 约定：PANEL_APP_PORT_* 供「端口外部访问」识别；HOST_IP 勾选时为空以绑定全网卡。
+relay_compose_publish() {
+    local host_port="$1" container_port="$2" proto="${3:-tcp}"
+    if [[ "${proto}" == "udp" ]]; then
+        printf '      - "${HOST_IP}%s:%s/udp"\n' "${host_port}" "${container_port}"
+    else
+        printf '      - "${HOST_IP}%s:%s"\n' "${host_port}" "${container_port}"
+    fi
+}
+
 relay_load_env() {
     local base_dir="$1"
     local f
@@ -62,23 +74,21 @@ relay_host_tcp_port_taken() {
 
 relay_assert_ports_free() {
     local tls_mode="${NETBIRD_RELAY_TLS_MODE:-custom_cert}"
-    local local_port="${NETBIRD_RELAY_LOCAL_PORT:-33080}"
-    local public_port="${NETBIRD_RELAY_PUBLIC_PORT:-443}"
-    local stun_port="${NETBIRD_STUN_PORT:-3478}"
+    local relay_port="${PANEL_APP_PORT_HTTP:-${NETBIRD_RELAY_PUBLIC_PORT:-443}}"
+    local stun_port="${PANEL_APP_PORT_STUN:-${NETBIRD_STUN_PORT:-3478}}"
+    local acme_port="${PANEL_APP_PORT_ACME:-80}"
     local busy=""
 
     case "${tls_mode}" in
         letsencrypt_builtin)
-            relay_host_tcp_port_taken "80" && busy="${busy} HTTP(:80)"
-            relay_host_tcp_port_taken "443" && busy="${busy} HTTPS(:443)"
+            relay_host_tcp_port_taken "${acme_port}" \
+                && busy="${busy} ACME(HTTP:${acme_port})"
+            relay_host_tcp_port_taken "${relay_port}" \
+                && busy="${busy} Relay(TCP:${relay_port})"
             ;;
         custom_cert)
-            relay_host_tcp_port_taken "${public_port}" \
-                && busy="${busy} Relay(public TCP:${public_port})"
-            if [[ "${public_port}" != "${local_port}" ]]; then
-                relay_tcp_port_taken "127.0.0.1" "${local_port}" \
-                    && busy="${busy} Relay(127.0.0.1:${local_port})"
-            fi
+            relay_host_tcp_port_taken "${relay_port}" \
+                && busy="${busy} Relay(TCP:${relay_port})"
             ;;
         *)
             relay_fail "Invalid NETBIRD_RELAY_TLS_MODE: ${tls_mode} (use custom_cert or letsencrypt_builtin)"

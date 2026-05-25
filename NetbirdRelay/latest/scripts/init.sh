@@ -54,9 +54,10 @@ relay_load_env "${BASE_DIR}" || true
 NETBIRD_RELAY_DOMAIN="${NETBIRD_RELAY_DOMAIN:-}"
 NETBIRD_RELAY_AUTH_SECRET="${NETBIRD_RELAY_AUTH_SECRET:-}"
 NETBIRD_RELAY_TLS_MODE="${NETBIRD_RELAY_TLS_MODE:-custom_cert}"
-NETBIRD_RELAY_LOCAL_PORT="${NETBIRD_RELAY_LOCAL_PORT:-33080}"
-NETBIRD_RELAY_PUBLIC_PORT="${NETBIRD_RELAY_PUBLIC_PORT:-443}"
-NETBIRD_STUN_PORT="${NETBIRD_STUN_PORT:-3478}"
+# 1Panel 「端口外部访问」 / firewall: use PANEL_APP_PORT_* + HOST_IP in compose ports.
+PANEL_APP_PORT_HTTP="${PANEL_APP_PORT_HTTP:-${NETBIRD_RELAY_PUBLIC_PORT:-443}}"
+PANEL_APP_PORT_STUN="${PANEL_APP_PORT_STUN:-${NETBIRD_STUN_PORT:-3478}}"
+PANEL_APP_PORT_ACME="${PANEL_APP_PORT_ACME:-80}"
 NETBIRD_LETSENCRYPT_EMAIL="${NETBIRD_LETSENCRYPT_EMAIL:-}"
 NETBIRD_TLS_CERT_FILE="${NETBIRD_TLS_CERT_FILE:-}"
 NETBIRD_TLS_KEY_FILE="${NETBIRD_TLS_KEY_FILE:-}"
@@ -66,9 +67,9 @@ NETBIRD_TLS_KEY_FILE="${NETBIRD_TLS_KEY_FILE:-}"
 validate_domain "${NETBIRD_RELAY_DOMAIN}"
 validate_tls_mode "${NETBIRD_RELAY_TLS_MODE}"
 validate_auth_secret "${NETBIRD_RELAY_AUTH_SECRET}"
-validate_port "NETBIRD_RELAY_LOCAL_PORT" "${NETBIRD_RELAY_LOCAL_PORT}"
-validate_port "NETBIRD_RELAY_PUBLIC_PORT" "${NETBIRD_RELAY_PUBLIC_PORT}"
-validate_port "NETBIRD_STUN_PORT" "${NETBIRD_STUN_PORT}"
+validate_port "PANEL_APP_PORT_HTTP" "${PANEL_APP_PORT_HTTP}"
+validate_port "PANEL_APP_PORT_STUN" "${PANEL_APP_PORT_STUN}"
+validate_port "PANEL_APP_PORT_ACME" "${PANEL_APP_PORT_ACME}"
 
 log "Cleaning up containers from any previous failed install ..."
 relay_cleanup_stale_containers
@@ -76,7 +77,7 @@ relay_assert_ports_free
 
 mkdir -p "${DATA_DIR}/relay-data"
 
-NB_EXPOSED="rels://${NETBIRD_RELAY_DOMAIN}:${NETBIRD_RELAY_PUBLIC_PORT}"
+NB_EXPOSED="rels://${NETBIRD_RELAY_DOMAIN}:${PANEL_APP_PORT_HTTP}"
 RELAY_ENV_EXTRA=""
 COMPOSE_PORTS=""
 COMPOSE_VOLUMES="      - ./data/relay-data:/data"
@@ -84,13 +85,10 @@ COMPOSE_VOLUMES="      - ./data/relay-data:/data"
 case "${NETBIRD_RELAY_TLS_MODE}" in
     letsencrypt_builtin)
         [[ -n "${NETBIRD_LETSENCRYPT_EMAIL}" ]] || fail "NETBIRD_LETSENCRYPT_EMAIL is required for letsencrypt_builtin"
-        NB_LISTEN=":443"
-        COMPOSE_PORTS=$(cat <<PEOF
-      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
-      - "80:80"
-      - "443:443"
-PEOF
-)
+        NB_LISTEN=":${PANEL_APP_PORT_HTTP}"
+        COMPOSE_PORTS="$(relay_compose_publish "${PANEL_APP_PORT_STUN}" "${PANEL_APP_PORT_STUN}" udp)
+$(relay_compose_publish "${PANEL_APP_PORT_ACME}" "80")
+$(relay_compose_publish "${PANEL_APP_PORT_HTTP}" "${PANEL_APP_PORT_HTTP}")"
         RELAY_ENV_EXTRA=$(cat <<LEOF
 
 NB_LETSENCRYPT_DOMAINS=${NETBIRD_RELAY_DOMAIN}
@@ -104,25 +102,13 @@ LEOF
             || fail "NETBIRD_TLS_CERT_FILE must point to an existing certificate file on the host"
         [[ -n "${NETBIRD_TLS_KEY_FILE}" && -f "${NETBIRD_TLS_KEY_FILE}" ]] \
             || fail "NETBIRD_TLS_KEY_FILE must point to an existing private key file on the host"
-        NB_LISTEN=":${NETBIRD_RELAY_LOCAL_PORT}"
+        NB_LISTEN=":${PANEL_APP_PORT_HTTP}"
         CERTS_DIR="${DATA_DIR}/certs"
         mkdir -p "${CERTS_DIR}"
         install -m 0644 "${NETBIRD_TLS_CERT_FILE}" "${CERTS_DIR}/fullchain.pem"
         install -m 0600 "${NETBIRD_TLS_KEY_FILE}" "${CERTS_DIR}/privkey.pem"
-        # Publish relay TLS on host public port (e.g. 1443 -> container 33080).
-        # 在宿主机公网端口暴露 Relay TLS（例如 1443 映射到容器 33080）。
-        COMPOSE_PORTS=$(cat <<PEOF
-      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
-      - "${NETBIRD_RELAY_PUBLIC_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
-PEOF
-)
-        if [[ "${NETBIRD_RELAY_PUBLIC_PORT}" != "${NETBIRD_RELAY_LOCAL_PORT}" ]]; then
-            COMPOSE_PORTS+=$(cat <<PEOF
-
-      - "127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
-PEOF
-)
-        fi
+        COMPOSE_PORTS="$(relay_compose_publish "${PANEL_APP_PORT_STUN}" "${PANEL_APP_PORT_STUN}" udp)
+$(relay_compose_publish "${PANEL_APP_PORT_HTTP}" "${PANEL_APP_PORT_HTTP}")"
         COMPOSE_VOLUMES=$(cat <<VEOF
       - ./data/relay-data:/data
       - ./data/certs:/certs:ro
@@ -167,7 +153,7 @@ NB_LISTEN_ADDRESS=${NB_LISTEN}
 NB_EXPOSED_ADDRESS=${NB_EXPOSED}
 NB_AUTH_SECRET=${NETBIRD_RELAY_AUTH_SECRET}
 NB_ENABLE_STUN=true
-NB_STUN_PORTS=${NETBIRD_STUN_PORT}
+NB_STUN_PORTS=${PANEL_APP_PORT_STUN}
 ${RELAY_ENV_EXTRA}
 EOF
 
@@ -177,15 +163,15 @@ if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
     cat > "${DATA_DIR}/openresty-relay-stream.conf" <<NGXEOF
 # NetBird external relay — OpenResty stream TLS passthrough (OPTIONAL; custom_cert publishes host port via Docker by default)
 # OpenResty stream TLS 透传（可选；custom_cert 默认已由 Docker 暴露公网端口，勿与 Docker 重复监听同一端口）
-# Domain: ${NETBIRD_RELAY_DOMAIN}  |  Backend: 127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}
+# Domain: ${NETBIRD_RELAY_DOMAIN}  |  Backend: 127.0.0.1:${PANEL_APP_PORT_HTTP}
 
 upstream netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_} {
-    server 127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT};
+    server 127.0.0.1:${PANEL_APP_PORT_HTTP};
 }
 
 server {
-    listen ${NETBIRD_RELAY_PUBLIC_PORT};
-    listen [::]:${NETBIRD_RELAY_PUBLIC_PORT};
+    listen ${PANEL_APP_PORT_HTTP};
+    listen [::]:${PANEL_APP_PORT_HTTP};
     proxy_pass netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_};
     ssl_preread on;
     proxy_timeout 1d;
@@ -202,7 +188,7 @@ cat > "${DATA_DIR}/main-server-config-snippet.yaml" <<SNIPEOF
 # 3. Restart netbird-server container
 
   stuns:
-    - uri: "stun:${NETBIRD_RELAY_DOMAIN}:${NETBIRD_STUN_PORT}"
+    - uri: "stun:${NETBIRD_RELAY_DOMAIN}:${PANEL_APP_PORT_STUN}"
       proto: "udp"
 
   relays:
@@ -215,10 +201,10 @@ SNIPEOF
 log "Wrote ${DATA_DIR}/relay.env"
 log "Wrote ${BASE_DIR}/docker-compose.yml (TLS mode: ${NETBIRD_RELAY_TLS_MODE})"
 log "Exposed relay: ${NB_EXPOSED}"
-log "STUN UDP port: ${NETBIRD_STUN_PORT}"
+log "STUN UDP port: ${PANEL_APP_PORT_STUN} (PANEL_APP_PORT_STUN)"
+log "Relay TCP port: ${PANEL_APP_PORT_HTTP} (PANEL_APP_PORT_HTTP; bind via HOST_IP + 「端口外部访问」)"
 if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
     log "TLS certs in ${DATA_DIR}/certs/ (from ${NETBIRD_TLS_CERT_FILE})"
-    log "Relay TCP published on host :${NETBIRD_RELAY_PUBLIC_PORT} -> container :${NETBIRD_RELAY_LOCAL_PORT}"
     log "OpenResty stream (optional, only if you need a second front on the same public port): ${DATA_DIR}/openresty-relay-stream.conf"
 fi
 log "Main server YAML snippet: ${DATA_DIR}/main-server-config-snippet.yaml"

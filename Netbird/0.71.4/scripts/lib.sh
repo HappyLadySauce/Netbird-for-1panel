@@ -62,7 +62,7 @@ netbird_udp_port_taken() {
 netbird_assert_ports_free() {
     local http_port="${PANEL_APP_PORT_HTTP:-8080}"
     local mgmt_port="${NETBIRD_MGMT_PORT:-8081}"
-    local stun_port="${NETBIRD_STUN_PORT:-3478}"
+    local stun_port="${PANEL_APP_PORT_STUN:-${NETBIRD_STUN_PORT:-3478}}"
     local busy=""
 
     netbird_tcp_port_taken "127.0.0.1" "${http_port}" && busy="${busy} Dashboard(127.0.0.1:${http_port})"

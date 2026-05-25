@@ -11,24 +11,24 @@ additionalProperties:
         - default: 8080
           edit: true
           envKey: PANEL_APP_PORT_HTTP
-          labelEn: Dashboard local port (127.0.0.1, for OpenResty)
-          labelZh: Dashboard 本机端口（127.0.0.1，供 OpenResty 反代；勿与已占用端口冲突）
+          labelEn: Dashboard local port (always 127.0.0.1; OpenResty :443, not 「External port access」)
+          labelZh: Dashboard 本机端口（固定 127.0.0.1，经 OpenResty :443；勿勾选此外部端口暴露 Dashboard）
           required: true
           rule: paramPort
           type: number
         - default: 8081
           edit: true
           envKey: NETBIRD_MGMT_PORT
-          labelEn: Management/API local port (127.0.0.1)
-          labelZh: 管理/API 本机端口（127.0.0.1；勿与已占用端口冲突）
+          labelEn: Management/API local port (always 127.0.0.1; gRPC via OpenResty)
+          labelZh: 管理/API 本机端口（固定 127.0.0.1，gRPC 经 OpenResty 反代）
           required: true
           rule: paramPort
           type: number
         - default: 3478
           edit: true
-          envKey: NETBIRD_STUN_PORT
-          labelEn: STUN UDP port (host)
-          labelZh: STUN UDP 端口（宿主机）
+          envKey: PANEL_APP_PORT_STUN
+          labelEn: STUN UDP (HOST_IP + 「External port access」 when not using external Relay)
+          labelZh: STUN UDP（未用外部 Relay 时，高级设置勾选「端口外部访问」以放行）
           required: true
           rule: paramPort
           type: number

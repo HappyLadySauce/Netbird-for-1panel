@@ -33,8 +33,10 @@
 | 公网域名 | 仅主机名，不要带 `https://` |
 | Dashboard 本机端口 | 默认 `8080`，绑定 `127.0.0.1` |
 | 管理/API 本机端口 | 默认 `8081`，绑定 `127.0.0.1` |
-| STUN UDP 端口 | 默认 `3478` |
+| STUN UDP (`PANEL_APP_PORT_STUN`) | 默认 `3478`；未用外部 Relay 时，高级设置**勾选「端口外部访问」**以放行 UDP |
 | 加密密钥 | 可留空，由 `init.sh` 自动生成 |
+
+**关于「端口外部访问」**：Dashboard / 管理 API **固定** `127.0.0.1`（经 OpenResty 的 80/443 对外，在 **网站** 模块放行即可）。勾选此外部访问主要作用于 **STUN UDP**；勿指望该勾选项直接暴露 Dashboard 的 8080 端口。
 
 ### 3. 配置 1Panel 网站（OpenResty）— 必须手动改文件
 
@@ -154,7 +156,7 @@ grep authSecret /opt/1panel/apps/netbird/<实例>/data/config.yaml
 
 ### 3. 可选：移除主控 STUN 端口映射
 
-编辑 [0.71.4/docker-compose.yml](0.71.4/docker-compose.yml)，可删除 `netbird-server` 的 `${NETBIRD_STUN_PORT}/udp` 映射（STUN 改由外部 Relay 提供）。
+编辑 [0.71.4/docker-compose.yml](0.71.4/docker-compose.yml)，可删除 `netbird-server` 的 `${PANEL_APP_PORT_STUN}/udp` 映射（STUN 改由外部 Relay 提供）。
 
 ### 4. 重启与验证
 

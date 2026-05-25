@@ -38,7 +38,7 @@ netbird_load_env "${BASE_DIR}" || true
 NETBIRD_DOMAIN="${NETBIRD_DOMAIN:-}"
 PANEL_APP_PORT_HTTP="${PANEL_APP_PORT_HTTP:-8080}"
 NETBIRD_MGMT_PORT="${NETBIRD_MGMT_PORT:-8081}"
-NETBIRD_STUN_PORT="${NETBIRD_STUN_PORT:-3478}"
+PANEL_APP_PORT_STUN="${PANEL_APP_PORT_STUN:-${NETBIRD_STUN_PORT:-3478}}"
 DATASTORE_ENCRYPTION_KEY="${DATASTORE_ENCRYPTION_KEY:-}"
 NETBIRD_RELAY_AUTH_SECRET="${NETBIRD_RELAY_AUTH_SECRET:-}"
 
@@ -49,7 +49,7 @@ fi
 validate_domain "$NETBIRD_DOMAIN"
 validate_port "PANEL_APP_PORT_HTTP" "$PANEL_APP_PORT_HTTP"
 validate_port "NETBIRD_MGMT_PORT" "$NETBIRD_MGMT_PORT"
-validate_port "NETBIRD_STUN_PORT" "$NETBIRD_STUN_PORT"
+validate_port "PANEL_APP_PORT_STUN" "$PANEL_APP_PORT_STUN"
 
 log "Cleaning up containers from any previous failed install ..."
 netbird_cleanup_stale_containers
@@ -72,7 +72,7 @@ server:
   listenAddress: ":80"
   exposedAddress: "${NETBIRD_HTTP_PROTOCOL}://${NETBIRD_DOMAIN}:${NETBIRD_PORT}"
   stunPorts:
-    - ${NETBIRD_STUN_PORT}
+    - ${PANEL_APP_PORT_STUN}
   metricsPort: 9090
   healthcheckAddress: ":9000"
   logLevel: "info"
@@ -168,7 +168,7 @@ EOF
 chmod 600 "${DATA_DIR}/config.yaml" "${DATA_DIR}/dashboard.env" 2>/dev/null || true
 
 log "Wrote ${DATA_DIR}/config.yaml and dashboard.env"
-log "Ports: dashboard 127.0.0.1:${PANEL_APP_PORT_HTTP}, api 127.0.0.1:${NETBIRD_MGMT_PORT}, stun udp ${NETBIRD_STUN_PORT}"
+log "Ports: dashboard 127.0.0.1:${PANEL_APP_PORT_HTTP}, api 127.0.0.1:${NETBIRD_MGMT_PORT}, stun udp \${HOST_IP}${PANEL_APP_PORT_STUN} (PANEL_APP_PORT_STUN)"
 log "OpenResty snippet: ${DATA_DIR}/openresty-snippet.conf"
 log "After install: HTTPS site for ${NETBIRD_DOMAIN}, then https://${NETBIRD_DOMAIN}/setup"
 

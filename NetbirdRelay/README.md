@@ -10,9 +10,9 @@
 | Relay 认证密钥 | 与主 NetBird `config.yaml` 的 `authSecret` **完全一致**（支持 base64，可含 `/+=`） |
 | TLS 模式 | **`custom_cert`**（默认）：自填证书路径；**`letsencrypt_builtin`**：容器申请证书 |
 | TLS 证书 / 私钥路径 | `custom_cert` 时必填，宿主机绝对路径 |
-| Relay 容器内端口 | 默认 `33080`（容器内监听） |
-| rels:// 对外端口 | 默认 `443`（宿主机 TCP 映射并写入 `rels://` URL） |
-| STUN UDP | 默认 `3478` |
+| Relay TCP 端口 (`PANEL_APP_PORT_HTTP`) | 默认 `443`（`rels://` URL、容器内监听同一端口） |
+| STUN UDP (`PANEL_APP_PORT_STUN`) | 默认 `3478` |
+| 高级设置 → **端口外部访问** | **建议勾选**：1Panel 据此放行防火墙，并将 `HOST_IP` 设为全网卡（未勾选则仅 `127.0.0.1`） |
 
 ### custom_cert（默认）
 
@@ -20,9 +20,9 @@
    - `/opt/1panel/www/sites/<域名>/ssl/fullchain.pem`
    - `/opt/1panel/www/sites/<域名>/ssl/privkey.pem`
 2. 安装本应用，在表单中填写上述路径。
-3. **Docker 会直接暴露** `rels://` 中的公网 TCP 端口（例如 `1443:33080`）。防火墙需放行该 TCP 端口与 STUN UDP。
-4. **若公网端口已被占用**（如 443 被 OpenResty 占用）：将「对外端口」改为可用端口（如 `1443`），勿与 OpenResty 同时监听同一端口。
-5. **可选 OpenResty stream**：仅当需要由 OpenResty 做 TLS 透传且不让 Docker 占用该公网端口时使用 `data/openresty-relay-stream.conf`（见 [docs/openresty/relay/](../docs/openresty/relay/README.md)）；公网端口与容器端口不一致时，会额外映射 `127.0.0.1:<容器端口>` 供 stream 后端使用。
+3. 安装时在**高级设置**勾选 **端口外部访问**（compose 使用 `PANEL_APP_PORT_HTTP` / `PANEL_APP_PORT_STUN` + `HOST_IP`）。Relay TCP 宿主机与容器 1:1（如 `1443:1443`）。
+4. **若 443 被 OpenResty 占用**：将 Relay TCP 端口改为可用端口（如 `1443`），勿与 OpenResty 同时监听同一端口。
+5. **可选 OpenResty stream**：仅当需要由 OpenResty 做 TLS 透传且不让 Docker 绑定该端口时使用 `data/openresty-relay-stream.conf`（见 [docs/openresty/relay/](../docs/openresty/relay/README.md)）。
 
 ### letsencrypt_builtin
 
