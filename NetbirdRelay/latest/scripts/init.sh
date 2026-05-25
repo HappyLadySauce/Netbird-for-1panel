@@ -78,11 +78,19 @@ mkdir -p "${DATA_DIR}/relay-data"
 
 NB_EXPOSED="rels://${NETBIRD_RELAY_DOMAIN}:${NETBIRD_RELAY_PUBLIC_PORT}"
 RELAY_ENV_EXTRA=""
+COMPOSE_PORTS=""
+COMPOSE_VOLUMES="      - ./data/relay-data:/data"
 
 case "${NETBIRD_RELAY_TLS_MODE}" in
     letsencrypt_builtin)
         [[ -n "${NETBIRD_LETSENCRYPT_EMAIL}" ]] || fail "NETBIRD_LETSENCRYPT_EMAIL is required for letsencrypt_builtin"
         NB_LISTEN=":443"
+        COMPOSE_PORTS=$(cat <<PEOF
+      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
+      - "80:80"
+      - "443:443"
+PEOF
+)
         RELAY_ENV_EXTRA=$(cat <<LEOF
 
 NB_LETSENCRYPT_DOMAINS=${NETBIRD_RELAY_DOMAIN}
@@ -90,44 +98,59 @@ NB_LETSENCRYPT_EMAIL=${NETBIRD_LETSENCRYPT_EMAIL}
 NB_LETSENCRYPT_DATA_DIR=/data/letsencrypt
 LEOF
 )
-        cat > "${BASE_DIR}/docker-compose.override.yml" <<OEOF
-services:
-  relay:
-    ports:
-      - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./data/relay-data:/data
-OEOF
         ;;
     custom_cert)
         [[ -n "${NETBIRD_TLS_CERT_FILE}" && -f "${NETBIRD_TLS_CERT_FILE}" ]] \
             || fail "NETBIRD_TLS_CERT_FILE must point to an existing certificate file on the host"
         [[ -n "${NETBIRD_TLS_KEY_FILE}" && -f "${NETBIRD_TLS_KEY_FILE}" ]] \
             || fail "NETBIRD_TLS_KEY_FILE must point to an existing private key file on the host"
-        cert_dir="$(dirname "${NETBIRD_TLS_CERT_FILE}")"
-        cert_base="$(basename "${NETBIRD_TLS_CERT_FILE}")"
-        key_base="$(basename "${NETBIRD_TLS_KEY_FILE}")"
         NB_LISTEN=":${NETBIRD_RELAY_LOCAL_PORT}"
-        RELAY_ENV_EXTRA=$(cat <<CCEOF
-
-NB_TLS_CERT_FILE=/certs/${cert_base}
-NB_TLS_KEY_FILE=/certs/${key_base}
-CCEOF
-)
-        cat > "${BASE_DIR}/docker-compose.override.yml" <<OEOF
-services:
-  relay:
-    ports:
+        CERTS_DIR="${DATA_DIR}/certs"
+        mkdir -p "${CERTS_DIR}"
+        install -m 0644 "${NETBIRD_TLS_CERT_FILE}" "${CERTS_DIR}/fullchain.pem"
+        install -m 0600 "${NETBIRD_TLS_KEY_FILE}" "${CERTS_DIR}/privkey.pem"
+        COMPOSE_PORTS=$(cat <<PEOF
       - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
       - "127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
-    volumes:
+PEOF
+)
+        COMPOSE_VOLUMES=$(cat <<VEOF
       - ./data/relay-data:/data
-      - ${cert_dir}:/certs:ro
-OEOF
+      - ./data/certs:/certs:ro
+VEOF
+)
+        RELAY_ENV_EXTRA=$(cat <<CCEOF
+
+NB_TLS_CERT_FILE=/certs/fullchain.pem
+NB_TLS_KEY_FILE=/certs/privkey.pem
+CCEOF
+)
+        log "Copied TLS material to ${CERTS_DIR}/ (fullchain.pem, privkey.pem)"
         ;;
 esac
+
+# 1Panel only loads docker-compose.yml (not docker-compose.override.yml).
+cat > "${BASE_DIR}/docker-compose.yml" <<DCEOF
+services:
+  relay:
+    image: netbirdio/relay:latest
+    container_name: \${CONTAINER_NAME}
+    restart: unless-stopped
+    env_file:
+      - ./data/relay.env
+    ports:
+${COMPOSE_PORTS}
+    volumes:
+${COMPOSE_VOLUMES}
+    labels:
+      createdBy: "Apps"
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "2"
+DCEOF
+rm -f "${BASE_DIR}/docker-compose.override.yml"
 
 cat > "${DATA_DIR}/relay.env" <<EOF
 NB_LOG_LEVEL=info
@@ -181,11 +204,11 @@ cat > "${DATA_DIR}/main-server-config-snippet.yaml" <<SNIPEOF
 SNIPEOF
 
 log "Wrote ${DATA_DIR}/relay.env"
-log "Wrote ${BASE_DIR}/docker-compose.override.yml (TLS mode: ${NETBIRD_RELAY_TLS_MODE})"
+log "Wrote ${BASE_DIR}/docker-compose.yml (TLS mode: ${NETBIRD_RELAY_TLS_MODE})"
 log "Exposed relay: ${NB_EXPOSED}"
 log "STUN UDP port: ${NETBIRD_STUN_PORT}"
 if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
-    log "TLS cert: ${NETBIRD_TLS_CERT_FILE}"
+    log "TLS certs in ${DATA_DIR}/certs/ (from ${NETBIRD_TLS_CERT_FILE})"
     log "OpenResty stream (optional, if :443 is on OpenResty): ${DATA_DIR}/openresty-relay-stream.conf"
 fi
 log "Main server YAML snippet: ${DATA_DIR}/main-server-config-snippet.yaml"
