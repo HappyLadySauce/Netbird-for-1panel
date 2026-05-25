@@ -109,11 +109,20 @@ LEOF
         mkdir -p "${CERTS_DIR}"
         install -m 0644 "${NETBIRD_TLS_CERT_FILE}" "${CERTS_DIR}/fullchain.pem"
         install -m 0600 "${NETBIRD_TLS_KEY_FILE}" "${CERTS_DIR}/privkey.pem"
+        # Publish relay TLS on host public port (e.g. 1443 -> container 33080).
+        # 在宿主机公网端口暴露 Relay TLS（例如 1443 映射到容器 33080）。
         COMPOSE_PORTS=$(cat <<PEOF
       - "${NETBIRD_STUN_PORT}:${NETBIRD_STUN_PORT}/udp"
+      - "${NETBIRD_RELAY_PUBLIC_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
+PEOF
+)
+        if [[ "${NETBIRD_RELAY_PUBLIC_PORT}" != "${NETBIRD_RELAY_LOCAL_PORT}" ]]; then
+            COMPOSE_PORTS+=$(cat <<PEOF
+
       - "127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}:${NETBIRD_RELAY_LOCAL_PORT}"
 PEOF
 )
+        fi
         COMPOSE_VOLUMES=$(cat <<VEOF
       - ./data/relay-data:/data
       - ./data/certs:/certs:ro
@@ -166,8 +175,8 @@ chmod 600 "${DATA_DIR}/relay.env" 2>/dev/null || true
 
 if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
     cat > "${DATA_DIR}/openresty-relay-stream.conf" <<NGXEOF
-# NetBird external relay — OpenResty stream TLS passthrough (optional when OpenResty holds :443)
-# 当本机 443 由 1Panel OpenResty 占用时，在 stream {} 中 include 本文件
+# NetBird external relay — OpenResty stream TLS passthrough (OPTIONAL; custom_cert publishes host port via Docker by default)
+# OpenResty stream TLS 透传（可选；custom_cert 默认已由 Docker 暴露公网端口，勿与 Docker 重复监听同一端口）
 # Domain: ${NETBIRD_RELAY_DOMAIN}  |  Backend: 127.0.0.1:${NETBIRD_RELAY_LOCAL_PORT}
 
 upstream netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_} {
@@ -175,8 +184,8 @@ upstream netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_} {
 }
 
 server {
-    listen 443;
-    listen [::]:443;
+    listen ${NETBIRD_RELAY_PUBLIC_PORT};
+    listen [::]:${NETBIRD_RELAY_PUBLIC_PORT};
     proxy_pass netbird_relay_tls_${NETBIRD_RELAY_DOMAIN//[^a-zA-Z0-9]/_};
     ssl_preread on;
     proxy_timeout 1d;
@@ -209,7 +218,8 @@ log "Exposed relay: ${NB_EXPOSED}"
 log "STUN UDP port: ${NETBIRD_STUN_PORT}"
 if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
     log "TLS certs in ${DATA_DIR}/certs/ (from ${NETBIRD_TLS_CERT_FILE})"
-    log "OpenResty stream (optional, if :443 is on OpenResty): ${DATA_DIR}/openresty-relay-stream.conf"
+    log "Relay TCP published on host :${NETBIRD_RELAY_PUBLIC_PORT} -> container :${NETBIRD_RELAY_LOCAL_PORT}"
+    log "OpenResty stream (optional, only if you need a second front on the same public port): ${DATA_DIR}/openresty-relay-stream.conf"
 fi
 log "Main server YAML snippet: ${DATA_DIR}/main-server-config-snippet.yaml"
 

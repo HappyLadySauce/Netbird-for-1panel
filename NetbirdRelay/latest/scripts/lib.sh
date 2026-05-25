@@ -63,6 +63,7 @@ relay_host_tcp_port_taken() {
 relay_assert_ports_free() {
     local tls_mode="${NETBIRD_RELAY_TLS_MODE:-custom_cert}"
     local local_port="${NETBIRD_RELAY_LOCAL_PORT:-33080}"
+    local public_port="${NETBIRD_RELAY_PUBLIC_PORT:-443}"
     local stun_port="${NETBIRD_STUN_PORT:-3478}"
     local busy=""
 
@@ -72,7 +73,12 @@ relay_assert_ports_free() {
             relay_host_tcp_port_taken "443" && busy="${busy} HTTPS(:443)"
             ;;
         custom_cert)
-            relay_tcp_port_taken "127.0.0.1" "${local_port}" && busy="${busy} Relay(127.0.0.1:${local_port})"
+            relay_host_tcp_port_taken "${public_port}" \
+                && busy="${busy} Relay(public TCP:${public_port})"
+            if [[ "${public_port}" != "${local_port}" ]]; then
+                relay_tcp_port_taken "127.0.0.1" "${local_port}" \
+                    && busy="${busy} Relay(127.0.0.1:${local_port})"
+            fi
             ;;
         *)
             relay_fail "Invalid NETBIRD_RELAY_TLS_MODE: ${tls_mode} (use custom_cert or letsencrypt_builtin)"

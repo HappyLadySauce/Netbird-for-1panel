@@ -40,16 +40,16 @@ additionalProperties:
         - default: 33080
           edit: true
           envKey: NETBIRD_RELAY_LOCAL_PORT
-          labelEn: Relay local TCP port (127.0.0.1; use with OpenResty stream on 443)
-          labelZh: Relay 本机 TCP 端口（绑定 127.0.0.1；公网 443 由 OpenResty stream 透传）
+          labelEn: Relay container TCP port (container listens here; host maps public port to it)
+          labelZh: Relay 容器内 TCP 端口（容器监听；宿主机将公网端口映射到此端口）
           required: true
           rule: paramPort
           type: number
         - default: 443
           edit: true
           envKey: NETBIRD_RELAY_PUBLIC_PORT
-          labelEn: Public relay port in rels:// URL (usually 443)
-          labelZh: rels:// 对外端口（通常为 443）
+          labelEn: Host + rels:// public TCP port (published by Docker in custom_cert mode)
+          labelZh: 宿主机与 rels:// 公网 TCP 端口（custom_cert 下由 Docker 直接映射暴露）
           required: true
           rule: paramPort
           type: number
