@@ -1,0 +1,14 @@
+services:
+  relay:
+    image: netbirdio/relay:latest
+    container_name: ${CONTAINER_NAME}
+    restart: unless-stopped
+    env_file:
+      - ./data/relay.env
+    labels:
+      createdBy: "Apps"
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "2"

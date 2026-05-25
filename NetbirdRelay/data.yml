@@ -1,0 +1,14 @@
+additionalProperties:
+    key: NetbirdRelay
+    name: NetBird Relay
+    tags:
+        - Tool
+        - Local
+    shortDescZh: NetBird 外部 Relay/STUN 节点（仅 relay 服务）
+    shortDescEn: NetBird external Relay/STUN node (relay service only)
+    type: tool
+    crossVersionUpdate: true
+    limit: 0
+    website: https://netbird.io/
+    github: https://github.com/netbirdio/netbird
+    document: https://docs.netbird.io/selfhosted/maintenance/scaling/set-up-external-relays

@@ -1,6 +1,6 @@
 # NetBird for 1Panel
 
-1Panel 本地应用包：一键部署 [NetBird](https://netbird.io/) 自建控制面与 [Traefik](https://traefik.io/) 反向代理。
+1Panel 本地应用包：一键部署 [NetBird](https://netbird.io/) 自建控制面、[Traefik](https://traefik.io/) 反向代理，以及独立 VPS 上的 **Relay/STUN** 节点（见 [NetbirdRelay](NetbirdRelay/README.md)）。
 
 ![NetBird](docs/images/NetBird.png)
 
@@ -8,15 +8,19 @@
 
 ```text
 Netbird/                          # 复制到 /opt/1panel/resource/apps/local/Netbird
+NetbirdRelay/                     # 外部 Relay/STUN 节点（独立 VPS）
 Traefik/                          # 复制到 /opt/1panel/resource/apps/local/Traefik
-install.sh                        # 一键安装 NetBird + Traefik 到 1Panel
+install.sh                        # 一键安装上述应用到 1Panel
 docs/
   images/                         # 文档配图
   openresty/
     1panel-openresty.md           # OpenResty 必用手动配置说明（必读）
-    proxy/                        # 可直接覆盖到 1Panel 站点的代理片段
+    proxy/                        # 主控面 HTTP/gRPC 代理片段
       netbird-server.conf
       root.conf
+      README.md
+    relay/                        # 外部 Relay stream 透传配置
+      relay-stream.conf
       README.md
 reference/golden/                 # 官方脚本生成的参考配置
 ```
@@ -33,11 +37,15 @@ curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/m
 
 也可在 **计划任务** 中新建 Shell 脚本任务执行上述命令（用户 `root`，宿主机执行，勿勾选「在容器中执行」）。
 
-`install.sh` 会**先删除** `/opt/1panel/resource/apps/local/Netbird`（及旧目录 `netbird`）、`Traefik` 再写入新文件。若需保留可设：`PANEL_INSTALL_SKIP_CLEANUP=1`，或分别设 `NETBIRD_INSTALL_SKIP_CLEANUP=1` / `TRAEFIK_INSTALL_SKIP_CLEANUP=1`。
+`install.sh` 会**先删除** `/opt/1panel/resource/apps/local/Netbird`（及旧目录 `netbird`）、`Traefik`、`NetbirdRelay` 再写入新文件。若需保留可设：`PANEL_INSTALL_SKIP_CLEANUP=1`，或分别设 `NETBIRD_INSTALL_SKIP_CLEANUP=1` / `TRAEFIK_INSTALL_SKIP_CLEANUP=1` / `NETBIRD_RELAY_INSTALL_SKIP_CLEANUP=1`。
 
 ![plans](docs/images/plans.png)
 
-然后在 **应用商店 → 更新应用列表** 中安装 **NetBird** 与 **Traefik**（`install.sh` 会同时写入两个本地应用包）。NetBird 按 [Netbird/README.md](Netbird/README.md) 填写安装表单。
+然后在 **应用商店 → 更新应用列表** 中安装 **NetBird** 与 **Traefik**（`install.sh` 会写入全部本地应用包）。NetBird 按 [Netbird/README.md](Netbird/README.md) 填写安装表单。
+
+### 外部 Relay / STUN 节点（可选）
+
+在**另一台**公网 VPS 上安装 **NetBird Relay** 应用（仅 `netbirdio/relay`），用于多区域中继。不要部署第二个完整 NetBird 控制面。步骤见 **[NetbirdRelay/README.md](NetbirdRelay/README.md)**；主控需在 `config.yaml` 登记 `rels://` 与 `stun:`，见 [Netbird/README.md — 扩展外部 Relay](Netbird/README.md#扩展外部-relay--stun)。
 
 ### 2. 配置 OpenResty（必做，不能只在面板里点反代）
 
@@ -67,8 +75,8 @@ Traefik 说明见 [Traefik/README.md](Traefik/README.md)（默认 HTTP/HTTPS `88
 
 ## 手动安装应用包
 
-1. 将 `Netbird/` 与 `Traefik/` 复制到 1Panel `resource/apps/local/`（或执行 `install.sh`）
-2. 应用商店 → 更新应用列表 → 安装 NetBird 与 Traefik
+1. 将 `Netbird/`、`NetbirdRelay/`、`Traefik/` 复制到 1Panel `resource/apps/local/`（或执行 `install.sh`）
+2. 应用商店 → 更新应用列表 → 安装 NetBird、Traefik，以及在 Relay VPS 上安装 NetBird Relay
 3. NetBird：按 [docs/openresty/1panel-openresty.md](docs/openresty/1panel-openresty.md) 配置反向代理
 
 ## 许可证

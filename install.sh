@@ -1,6 +1,6 @@
 #!/bin/sh
-# Install NetBird + Traefik 1Panel local apps into 1Panel app store directory.
-# 将 NetBird、Traefik 1Panel 本地应用一次性安装到 1Panel 应用商店目录。
+# Install NetBird + Traefik + NetbirdRelay 1Panel local apps into 1Panel app store directory.
+# 将 NetBird、Traefik、NetbirdRelay 1Panel 本地应用一次性安装到 1Panel 应用商店目录。
 #
 # One-liner:
 #   curl -fsSL https://raw.githubusercontent.com/HappyLadySauce/Netbird-for-1panel/main/install.sh | sh
@@ -15,7 +15,7 @@ BRANCH="${PANEL_1PANEL_BRANCH:-${NETBIRD_1PANEL_BRANCH:-${TRAEFIK_1PANEL_BRANCH:
 CLONE_DIR="${PANEL_1PANEL_CACHE:-${NETBIRD_1PANEL_CACHE:-${TRAEFIK_1PANEL_CACHE:-/tmp/Netbird-for-1panel}}}"
 
 # app_key:legacy_dir:SKIP_CLEANUP_ENV (legacy/skip empty allowed)
-APP_SPECS="Netbird:netbird:NETBIRD_INSTALL_SKIP_CLEANUP Traefik::TRAEFIK_INSTALL_SKIP_CLEANUP"
+APP_SPECS="Netbird:netbird:NETBIRD_INSTALL_SKIP_CLEANUP Traefik::TRAEFIK_INSTALL_SKIP_CLEANUP NetbirdRelay::NETBIRD_RELAY_INSTALL_SKIP_CLEANUP"
 
 SOURCE_DIR=""
 PANEL_ROOT=""
@@ -231,9 +231,10 @@ main() {
     done
 
     log "Done."
-    log "Open 1Panel -> App Store -> Update app list, then install NetBird and Traefik."
+    log "Open 1Panel -> App Store -> Update app list, then install NetBird, Traefik, and/or NetBird Relay."
     log "NetBird OpenResty: ${local_apps}/Netbird/README.md and docs/openresty/1panel-openresty.md"
     log "Traefik: ${local_apps}/Traefik/README.md (Dashboard 127.0.0.1, HTTP/HTTPS default 8880/8443)"
+    log "NetBird Relay (external VPS): ${local_apps}/NetbirdRelay/README.md"
     log "NetBird first admin: https://<your-domain>/setup"
 }
 

@@ -1,0 +1,82 @@
+additionalProperties:
+    formFields:
+        - default: ""
+          edit: true
+          envKey: NETBIRD_RELAY_DOMAIN
+          labelEn: Relay public domain (e.g. relay-cn.example.com, no https://)
+          labelZh: Relay 公网域名（如 relay-cn.example.com，不要带 https://）
+          required: true
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_RELAY_AUTH_SECRET
+          labelEn: Relay auth secret (must match main NetBird server authSecret)
+          labelZh: Relay 认证密钥（必须与主 NetBird 的 authSecret 一致）
+          required: true
+          rule: paramComplexity
+          type: password
+        - default: openresty_cert
+          edit: true
+          envKey: NETBIRD_RELAY_TLS_MODE
+          labelEn: TLS mode (openresty_cert | letsencrypt_builtin | custom_cert)
+          labelZh: TLS 模式（openresty_cert | letsencrypt_builtin | custom_cert）
+          required: true
+          rule: paramCommon
+          type: text
+        - default: 33080
+          edit: true
+          envKey: NETBIRD_RELAY_LOCAL_PORT
+          labelEn: Relay local TCP port (127.0.0.1 bind for openresty_cert/custom_cert)
+          labelZh: Relay 本机 TCP 端口（openresty_cert/custom_cert 时绑定 127.0.0.1）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 443
+          edit: true
+          envKey: NETBIRD_RELAY_PUBLIC_PORT
+          labelEn: Public relay port in rels:// URL (usually 443)
+          labelZh: rels:// 对外端口（通常为 443）
+          required: true
+          rule: paramPort
+          type: number
+        - default: 3478
+          edit: true
+          envKey: NETBIRD_STUN_PORT
+          labelEn: STUN UDP port (host, not proxied by OpenResty)
+          labelZh: STUN UDP 端口（宿主机直连，不经 OpenResty）
+          required: true
+          rule: paramPort
+          type: number
+        - default: ""
+          edit: true
+          envKey: NETBIRD_LETSENCRYPT_EMAIL
+          labelEn: Let's Encrypt email (required for letsencrypt_builtin)
+          labelZh: Let's Encrypt 邮箱（letsencrypt_builtin 模式必填）
+          required: false
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_RELAY_CERT_DIR
+          labelEn: 1Panel site SSL dir (empty = /opt/1panel/www/sites/<domain>/ssl)
+          labelZh: 1Panel 站点证书目录（留空则自动使用 /opt/1panel/www/sites/<域名>/ssl）
+          required: false
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_TLS_CERT_FILE
+          labelEn: Custom TLS cert file on host (custom_cert mode)
+          labelZh: 自定义证书文件路径（custom_cert 模式）
+          required: false
+          rule: paramCommon
+          type: text
+        - default: ""
+          edit: true
+          envKey: NETBIRD_TLS_KEY_FILE
+          labelEn: Custom TLS key file on host (custom_cert mode)
+          labelZh: 自定义私钥文件路径（custom_cert 模式）
+          required: false
+          rule: paramCommon
+          type: text

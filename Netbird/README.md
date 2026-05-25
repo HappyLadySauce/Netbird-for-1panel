@@ -115,6 +115,62 @@ dashboard 容器              netbird-server 容器
 - [1Panel 自助创建应用](https://bbs.fit2cloud.com/t/topic/7409)
 - 金样配置：`reference/golden/`（由官方 `getting-started.sh` 生成）
 
+
+## 扩展外部 Relay / STUN
+
+当需要多区域中继时，在**独立公网 VPS** 上安装本仓库的 **[NetbirdRelay](../NetbirdRelay/README.md)** 应用（仅 `netbirdio/relay`，含内置 STUN）。**不要**在 Relay 机器上再部署完整 NetBird 控制面。
+
+### 1. 获取共享密钥
+
+从本机应用数据目录读取安装时生成的密钥（与 `authSecret` 相同）：
+
+```bash
+grep authSecret /opt/1panel/apps/netbird/<实例>/data/config.yaml
+# 或安装 NetBird 时保存的「Relay 认证密钥」
+```
+
+所有 Relay 节点与主控 `relays.secret` 必须使用**同一**字符串。
+
+### 2. 修改主控 config.yaml
+
+启用外部 Relay 后，需**删除或注释** `server.authSecret` 与 `server.stunPorts`，并增加 `stuns` / `relays`（多节点时列出全部域名）：
+
+```yaml
+  stuns:
+    - uri: "stun:relay-cn.example.com:3478"
+      proto: "udp"
+    - uri: "stun:relay-us.example.com:3478"
+      proto: "udp"
+
+  relays:
+    addresses:
+      - "rels://relay-cn.example.com:443"
+      - "rels://relay-us.example.com:443"
+    secret: "<与所有 Relay 节点相同的 NB_AUTH_SECRET>"
+    credentialsTTL: "24h"
+```
+
+每个 Relay 实例安装后会在 `data/main-server-config-snippet.yaml` 生成可粘贴片段。
+
+### 3. 可选：移除主控 STUN 端口映射
+
+编辑 [0.71.4/docker-compose.yml](0.71.4/docker-compose.yml)，可删除 `netbird-server` 的 `${NETBIRD_STUN_PORT}/udp` 映射（STUN 改由外部 Relay 提供）。
+
+### 4. 重启与验证
+
+```bash
+docker restart <CONTAINER_NAME>-server
+docker logs <CONTAINER_NAME>-server 2>&1 | grep -i relay
+# 应显示 Relay: false 并列出外部 rels:// 地址
+```
+
+客户端：`netbird status -d` 中外部 STUN/Relay 应为 Available。
+
+OpenResty：Relay 节点使用 **stream** 透传，见 [docs/openresty/relay/](../docs/openresty/relay/README.md)。主控站的 `netbird-server.conf` **不能**用于 Relay 域名。
+
+官方说明：[Set Up External Relay Servers](https://docs.netbird.io/selfhosted/maintenance/scaling/set-up-external-relays)
+
+
 ## 后续版本（未包含）
 
 - NetBird Proxy / CrowdSec
