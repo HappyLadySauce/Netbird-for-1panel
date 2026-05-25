@@ -14,8 +14,7 @@ additionalProperties:
           labelEn: Relay auth secret (same as main NetBird authSecret; base64 allowed)
           labelZh: Relay 认证密钥（与主 NetBird authSecret 一致，支持 base64 含 /+=）
           required: true
-          rule: paramCommon
-          type: password
+          type: text
         - default: custom_cert
           edit: true
           envKey: NETBIRD_RELAY_TLS_MODE
@@ -27,18 +26,16 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_TLS_CERT_FILE
-          labelEn: TLS certificate file on host (required for custom_cert)
-          labelZh: TLS 证书文件路径（custom_cert 必填，如 .../ssl/fullchain.pem）
+          labelEn: TLS certificate file on host (required for custom_cert; absolute path)
+          labelZh: TLS 证书文件路径（custom_cert 必填，宿主机绝对路径）
           required: false
-          rule: paramCommon
           type: text
         - default: ""
           edit: true
           envKey: NETBIRD_TLS_KEY_FILE
-          labelEn: TLS private key file on host (required for custom_cert)
-          labelZh: TLS 私钥文件路径（custom_cert 必填，如 .../ssl/privkey.pem）
+          labelEn: TLS private key file on host (required for custom_cert; absolute path)
+          labelZh: TLS 私钥文件路径（custom_cert 必填，宿主机绝对路径）
           required: false
-          rule: paramCommon
           type: text
         - default: 33080
           edit: true
