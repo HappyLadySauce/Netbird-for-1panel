@@ -117,6 +117,10 @@ if [[ -n "${container_id}" ]]; then
     current_version="$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' \
         "${container_id}" 2>/dev/null || true)"
 fi
+if [[ ! "${current_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([.-].*)?$ ]]; then
+    current_version="image ${running_image_id#sha256:}"
+    current_version="${current_version:0:18}"
+fi
 
 log "App directory: ${APP_DIR}"
 log "Current Relay version: ${current_version}"
@@ -207,6 +211,11 @@ fi
 
 updated_version="$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' \
     "${container_id}" 2>/dev/null || true)"
+if [[ ! "${updated_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([.-].*)?$ ]]; then
+    updated_image_id="$(docker inspect --format '{{.Image}}' "${container_id}" 2>/dev/null || true)"
+    updated_version="image ${updated_image_id#sha256:}"
+    updated_version="${updated_version:0:18}"
+fi
 log "Updated Relay version: ${updated_version}"
 [[ -n "${backup_file}" ]] && log "Rollback data backup: ${backup_file}"
 log "Update completed."

@@ -117,11 +117,26 @@ container_image_id() {
 }
 
 container_version() {
-    local service="$1" container_id
+    local service="$1" container_id label log_version image_id
     container_id="$("${COMPOSE[@]}" ps -q "${service}" 2>/dev/null || true)"
     [[ -n "${container_id}" ]] || return 0
-    docker inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' \
-        "${container_id}" 2>/dev/null || true
+    label="$(docker inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' \
+        "${container_id}" 2>/dev/null || true)"
+    if [[ "${label}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+([.-].*)?$ ]]; then
+        printf '%s\n' "${label}"
+        return 0
+    fi
+    if [[ "${service}" == "netbird-server" ]]; then
+        log_version="$(docker logs --tail 500 "${container_id}" 2>&1 \
+            | sed -nE 's/.*management server version ([^[:space:]]+).*/\1/p' \
+            | tail -n 1)"
+        if [[ -n "${log_version}" ]]; then
+            printf '%s\n' "${log_version}"
+            return 0
+        fi
+    fi
+    image_id="$(docker inspect --format '{{.Image}}' "${container_id}" 2>/dev/null || true)"
+    printf 'image %.12s\n' "${image_id#sha256:}"
 }
 
 image_id() {
