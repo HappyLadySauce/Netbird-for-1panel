@@ -92,6 +92,14 @@ dashboard 容器              netbird-server 容器
 
 在 1Panel 中执行应用升级，或进入版本目录运行 `scripts/upgrade.sh` 拉取镜像。重大版本请参考 [官方升级文档](https://docs.netbird.io/selfhosted/maintenance/update)。
 
+需要自动拉取、备份并重建容器时，运行：
+
+```bash
+bash scripts/auto-update.sh
+```
+
+脚本只在镜像实际变化时停止服务；默认将一致性备份写入 `/opt/1panel/backup/netbird-auto/`。可先用 `--dry-run` 检查目录和 Compose 配置。
+
 ## 卸载
 
 卸载应用后，`data/` 目录可能仍保留 SQLite 与密钥；需彻底删除请手动清理应用数据目录。

@@ -13,3 +13,4 @@ else
     exit 1
 fi
 echo "[netbird-relay-upgrade] Images updated. Restart the app from 1Panel."
+echo "[netbird-relay-upgrade] For backup + automatic recreation, use scripts/auto-update.sh."

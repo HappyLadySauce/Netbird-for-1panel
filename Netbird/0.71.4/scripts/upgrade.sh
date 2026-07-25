@@ -14,3 +14,4 @@ else
 fi
 echo "[netbird-upgrade] Images updated. Restart the app from 1Panel."
 echo "[netbird-upgrade] See https://docs.netbird.io/selfhosted/maintenance/update"
+echo "[netbird-upgrade] For backup + automatic recreation, use scripts/auto-update.sh."

@@ -11,6 +11,7 @@ Netbird/                          # 复制到 /opt/1panel/resource/apps/local/Ne
 NetbirdRelay/                     # 外部 Relay/STUN 节点（独立 VPS）
 Traefik/                          # 复制到 /opt/1panel/resource/apps/local/Traefik
 install.sh                        # 一键安装上述应用到 1Panel
+auto-update.sh                    # 本机主控 + SSH 远端 Relay 自动更新调度器
 docs/
   images/                         # 文档配图
   openresty/
@@ -83,6 +84,39 @@ docker exec "$OR" openresty -t && docker exec "$OR" openresty -s reload
 浏览器访问 `https://<你的域名>/setup` 创建管理员。
 
 Traefik 说明见 [Traefik/README.md](Traefik/README.md)（默认 HTTP/HTTPS `8880`/`8443`，不与 OpenResty 争用 80/443）。
+
+## 自动更新 NetBird 与远端 Relay
+
+仓库根目录的 `auto-update.sh` 可先通过 SSH 更新外部 Relay，成功后再更新本机 NetBird 控制面。两个节点都会先比较运行中容器与拉取后的镜像；仅在镜像变化时短暂停止服务、备份 `data/`、`.env` 与 Compose 文件，然后重建并检查容器状态。备份目录还会生成同名 `.images.txt`，记录升级前的镜像 ID 和版本，供回退时核对。
+
+先执行无副作用检查：
+
+```bash
+NETBIRD_RELAY_SSH_HOST="relay.example.com" \
+NETBIRD_RELAY_SSH_PORT="22" \
+bash auto-update.sh --dry-run
+```
+
+确认后执行更新：
+
+```bash
+NETBIRD_RELAY_SSH_HOST="relay.example.com" \
+NETBIRD_RELAY_SSH_PORT="22" \
+bash auto-update.sh
+```
+
+默认目录：
+
+| 用途 | 路径 |
+|------|------|
+| 本机 NetBird | `/opt/1panel/apps/local/Netbird/Netbird` |
+| 本机备份 | `/opt/1panel/backup/netbird-auto` |
+| 远端 Relay | `/opt/1panel/apps/local/NetbirdRelay/NetbirdRelay` |
+| 远端备份 | `/opt/1panel/backup/netbird-relay-auto` |
+
+可在 1Panel **计划任务 → Shell 脚本**中保存上述命令，建议每周低峰期执行一次。SSH 必须使用密钥和 `BatchMode` 非交互登录。可用 `--local-only` / `--relay-only` 单独更新，或用 `--pull-only` 只拉镜像而不重建容器。应用目录中的 `scripts/auto-update.sh` 也可以在对应机器上独立执行。
+
+> 自动更新跟随 Docker `latest` 标签。生产环境应保留备份并关注上游发布说明；脚本不会自动删除历史备份。
 
 ## 手动安装应用包
 

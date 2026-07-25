@@ -43,6 +43,18 @@ Relay 容器自行申请 Let's Encrypt，占用宿主机 **80/443**。填写 LE 
 
 勿将主控 `netbird-server.conf` 用于 Relay 域名。
 
+## 自动更新
+
+在 Relay 实例目录运行：
+
+```bash
+bash scripts/auto-update.sh
+```
+
+脚本会拉取 `netbirdio/relay:latest`，仅在镜像变化时停止 Relay，备份 `data/`、`.env` 和 Compose 文件后重建容器。默认备份目录为 `/opt/1panel/backup/netbird-relay-auto/`；可先执行 `bash scripts/auto-update.sh --dry-run`。
+
+主控机也可使用仓库根目录的 `auto-update.sh` 通过 SSH 统一更新 Relay 与主控，参数见根目录 README。
+
 ## 参考
 
 - [Set Up External Relay Servers](https://docs.netbird.io/selfhosted/maintenance/scaling/set-up-external-relays)
