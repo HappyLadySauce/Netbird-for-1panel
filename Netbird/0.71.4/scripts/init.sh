@@ -91,7 +91,10 @@ server:
       - "http://localhost:53000/"
 
   reverseProxy:
+    # HTTP and gRPC requests both arrive from host-networked OpenResty.
     trustedHTTPProxies:
+      - "${TRUSTED_PROXY}"
+    trustedPeers:
       - "${TRUSTED_PROXY}"
 
   store:
