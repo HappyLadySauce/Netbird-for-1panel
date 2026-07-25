@@ -12,6 +12,9 @@ NetbirdRelay/                     # 外部 Relay/STUN 节点（独立 VPS）
 Traefik/                          # 复制到 /opt/1panel/resource/apps/local/Traefik
 install.sh                        # 一键安装上述应用到 1Panel
 auto-update.sh                    # 本机主控 + SSH 远端 Relay 自动更新调度器
+netbird-agent-auto-update.sh      # Linux Agent 的 APT 自动更新脚本
+install-agent-auto-update.sh      # 安装 Agent systemd 自动更新定时器
+systemd/                          # Agent 自动更新的 service / timer
 docs/
   images/                         # 文档配图
   openresty/
@@ -117,6 +120,29 @@ bash auto-update.sh
 可在 1Panel **计划任务 → Shell 脚本**中保存上述命令，建议每周低峰期执行一次。SSH 必须使用密钥和 `BatchMode` 非交互登录。可用 `--local-only` / `--relay-only` 单独更新，或用 `--pull-only` 只拉镜像而不重建容器。应用目录中的 `scripts/auto-update.sh` 也可以在对应机器上独立执行。
 
 > 自动更新跟随 Docker `latest` 标签。生产环境应保留备份并关注上游发布说明；脚本不会自动删除历史备份。
+
+### Linux Agent 自动更新
+
+主控/Relay 的 Docker 容器更新与宿主机上的 NetBird Agent 更新是两套独立流程。对于通过 NetBird 官方 APT 源安装的 Linux Agent，可在每台机器执行：
+
+```bash
+sudo bash install-agent-auto-update.sh
+```
+
+安装后，`netbird-agent-update.timer` 默认每周日 04:15 执行，并随机延迟最多 45 分钟。脚本只升级 `netbird` 包；检测到新版本后先备份 `/etc/netbird` 和 `/var/lib/netbird` 到 `/var/backups/netbird-agent/`，默认保留最近 5 份。可立即升级到指定版本：
+
+```bash
+sudo bash install-agent-auto-update.sh --version 0.75.0
+```
+
+`--version` 只限制本次执行，之后定时器仍自动跟随 APT 源中的最新版。查看运行时间和更新日志：
+
+```bash
+systemctl list-timers netbird-agent-update.timer
+journalctl -u netbird-agent-update.service
+```
+
+如果更习惯由 1Panel 调度，可不安装 timer，直接新建“计划任务 → Shell 脚本”，以 `root` 在宿主机每周执行 `/usr/local/sbin/netbird-agent-auto-update`。不要勾选“在容器中执行”，也不要同时启用 1Panel 任务和 systemd timer，以免重复调度。
 
 ## 手动安装应用包
 

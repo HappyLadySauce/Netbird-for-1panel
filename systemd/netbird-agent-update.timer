@@ -1,0 +1,12 @@
+[Unit]
+Description=Weekly NetBird Linux agent update
+
+[Timer]
+OnCalendar=Sun *-*-* 04:15:00
+RandomizedDelaySec=45m
+Persistent=true
+AccuracySec=1m
+Unit=netbird-agent-update.service
+
+[Install]
+WantedBy=timers.target
