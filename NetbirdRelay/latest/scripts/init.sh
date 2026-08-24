@@ -102,25 +102,29 @@ LEOF
             || fail "NETBIRD_TLS_CERT_FILE must point to an existing certificate file on the host"
         [[ -n "${NETBIRD_TLS_KEY_FILE}" && -f "${NETBIRD_TLS_KEY_FILE}" ]] \
             || fail "NETBIRD_TLS_KEY_FILE must point to an existing private key file on the host"
+        host_cert="$(readlink -f "${NETBIRD_TLS_CERT_FILE}")"
+        host_key="$(readlink -f "${NETBIRD_TLS_KEY_FILE}")"
+        host_cert_dir="$(dirname "${host_cert}")"
+        host_key_dir="$(dirname "${host_key}")"
+        cert_base="$(basename "${host_cert}")"
+        key_base="$(basename "${host_key}")"
+        [[ "${host_cert_dir}" == "${host_key_dir}" ]] \
+            || fail "NETBIRD_TLS_CERT_FILE and NETBIRD_TLS_KEY_FILE must be in the same host directory (bind-mounted to /certs)"
         NB_LISTEN=":${PANEL_APP_PORT_HTTP}"
-        CERTS_DIR="${DATA_DIR}/certs"
-        mkdir -p "${CERTS_DIR}"
-        install -m 0644 "${NETBIRD_TLS_CERT_FILE}" "${CERTS_DIR}/fullchain.pem"
-        install -m 0600 "${NETBIRD_TLS_KEY_FILE}" "${CERTS_DIR}/privkey.pem"
         COMPOSE_PORTS="$(relay_compose_publish "${PANEL_APP_PORT_STUN}" "${PANEL_APP_PORT_STUN}" udp)
 $(relay_compose_publish "${PANEL_APP_PORT_HTTP}" "${PANEL_APP_PORT_HTTP}")"
         COMPOSE_VOLUMES=$(cat <<VEOF
       - ./data/relay-data:/data
-      - ./data/certs:/certs:ro
+      - ${host_cert_dir}:/certs:ro
 VEOF
 )
         RELAY_ENV_EXTRA=$(cat <<CCEOF
 
-NB_TLS_CERT_FILE=/certs/fullchain.pem
-NB_TLS_KEY_FILE=/certs/privkey.pem
+NB_TLS_CERT_FILE=/certs/${cert_base}
+NB_TLS_KEY_FILE=/certs/${key_base}
 CCEOF
 )
-        log "Copied TLS material to ${CERTS_DIR}/ (fullchain.pem, privkey.pem)"
+        log "Bind-mounting host TLS directory ${host_cert_dir} -> /certs (${cert_base}, ${key_base})"
         ;;
 esac
 
@@ -204,7 +208,7 @@ log "Exposed relay: ${NB_EXPOSED}"
 log "STUN UDP port: ${PANEL_APP_PORT_STUN} (PANEL_APP_PORT_STUN)"
 log "Relay TCP port: ${PANEL_APP_PORT_HTTP} (PANEL_APP_PORT_HTTP; bind via HOST_IP + 「端口外部访问」)"
 if [[ "${NETBIRD_RELAY_TLS_MODE}" == "custom_cert" ]]; then
-    log "TLS certs in ${DATA_DIR}/certs/ (from ${NETBIRD_TLS_CERT_FILE})"
+    log "TLS bind-mount: ${NETBIRD_TLS_CERT_FILE} + ${NETBIRD_TLS_KEY_FILE} (restart relay after 1Panel renews the site certificate)"
     log "OpenResty stream (optional, only if you need a second front on the same public port): ${DATA_DIR}/openresty-relay-stream.conf"
 fi
 log "Main server YAML snippet: ${DATA_DIR}/main-server-config-snippet.yaml"

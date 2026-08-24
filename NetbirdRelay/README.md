@@ -18,10 +18,10 @@
 
 ### custom_cert（默认）
 
-1. 准备证书与私钥文件（例如从 1Panel 网站 SSL 目录复制路径）：
+1. 在表单填写宿主机证书与私钥的**绝对路径**（须在同一目录；容器会**绑定挂载该目录**，不再复制文件）。1Panel 站点 SSL 一般为：
    - `/opt/1panel/www/sites/<域名>/ssl/fullchain.pem`
    - `/opt/1panel/www/sites/<域名>/ssl/privkey.pem`
-2. 安装本应用，在表单中填写上述路径。
+2. 安装本应用。1Panel 续期站点证书后，**重启 Relay 容器**即可加载新证书（不必重装）。
 3. 安装时在**高级设置**勾选 **端口外部访问**（compose 使用 `PANEL_APP_PORT_HTTP` / `PANEL_APP_PORT_STUN` + `HOST_IP`）。Relay TCP 宿主机与容器 1:1（如 `1443:1443`）。
 4. **若 443 被 OpenResty 占用**：将 Relay TCP 端口改为可用端口（如 `1443`），勿与 OpenResty 同时监听同一端口。
 5. **可选 OpenResty stream**：仅当需要由 OpenResty 做 TLS 透传且不让 Docker 绑定该端口时使用 `data/openresty-relay-stream.conf`（见 [docs/openresty/relay/](../docs/openresty/relay/README.md)）。
