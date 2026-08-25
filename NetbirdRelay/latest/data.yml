@@ -26,15 +26,15 @@ additionalProperties:
         - default: ""
           edit: true
           envKey: NETBIRD_TLS_CERT_FILE
-          labelEn: TLS certificate file on host (custom_cert; absolute path; same directory as the key, bind-mounted)
-          labelZh: TLS 证书文件路径（custom_cert 必填，宿主机绝对路径；须与私钥同目录，绑定挂载）
+          labelEn: TLS certificate file on host (custom_cert; absolute path; bind-mounted as /certs/fullchain.pem)
+          labelZh: TLS 证书文件路径（custom_cert 必填，宿主机绝对路径；绑定挂载为 /certs/fullchain.pem）
           required: false
           type: text
         - default: ""
           edit: true
           envKey: NETBIRD_TLS_KEY_FILE
-          labelEn: TLS private key file on host (custom_cert; absolute path; same directory as the cert, bind-mounted)
-          labelZh: TLS 私钥文件路径（custom_cert 必填，宿主机绝对路径；须与证书同目录，绑定挂载）
+          labelEn: TLS private key file on host (custom_cert; absolute path; bind-mounted as /certs/privkey.pem)
+          labelZh: TLS 私钥文件路径（custom_cert 必填，宿主机绝对路径；绑定挂载为 /certs/privkey.pem）
           required: false
           type: text
         - default: 443

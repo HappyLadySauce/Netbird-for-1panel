@@ -18,7 +18,7 @@
 
 ### custom_cert（默认）
 
-1. 在表单填写宿主机证书与私钥的**绝对路径**（须在同一目录；容器会**绑定挂载该目录**，不再复制文件）。1Panel 站点 SSL 一般为：
+1. 在表单填写宿主机证书与私钥的**绝对路径**（容器会**分别绑定挂载这两个文件**到 `/certs/fullchain.pem` 与 `/certs/privkey.pem`，不再复制、也不要求同目录）。1Panel 站点 SSL 一般为：
    - `/opt/1panel/www/sites/<域名>/ssl/fullchain.pem`
    - `/opt/1panel/www/sites/<域名>/ssl/privkey.pem`
 2. 安装本应用。1Panel 续期站点证书后，**重启 Relay 容器**即可加载新证书（不必重装）。

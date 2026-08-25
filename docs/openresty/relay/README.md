@@ -6,7 +6,7 @@
 
 安装 **NetBird Relay** 时 TLS 模式为 **`custom_cert`**（默认）：
 
-1. 在表单填写宿主机上的 **证书**、**私钥** 绝对路径（须在同一目录，容器会绑定挂载该目录；例如 `/opt/1panel/www/sites/<域名>/ssl/fullchain.pem`）。
+1. 在表单填写宿主机上的 **证书**、**私钥** 绝对路径（分别绑定挂载到容器 `/certs/fullchain.pem`、`/certs/privkey.pem`；例如 `/opt/1panel/www/sites/<域名>/ssl/fullchain.pem`）。
 2. **默认**：Docker 将表单中的 Relay TCP 端口 1:1 暴露（如 `1443:1443`），无需 OpenResty 即可从公网访问 Relay。
 3. **仅当** 希望由 OpenResty 占用对外端口、且不让 Docker 绑定该端口时：把 `data/openresty-relay-stream.conf` 放入 OpenResty **stream** 段，并避免与 Docker 映射同一公网端口。
 
